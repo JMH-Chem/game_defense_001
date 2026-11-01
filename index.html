@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>등불 수호자</title>
+<meta name="description" content="마지막 등불을 지키는 판타지 타워 디펜스. 분기 업그레이드, 공명 시너지, 룬 선택, 영웅 조작.">
+<meta name="theme-color" content="#090a14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Song+Myung&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── 타이틀 ── -->
+  <section class="screen screen-title" id="scr-title">
+    <canvas id="title-bg" aria-hidden="true"></canvas>
+    <div class="title-wrap">
+      <p class="eyebrow">LANTERN KEEPER</p>
+      <h1 class="game-title">등불 수호자</h1>
+      <p class="tagline">어둠이 밀려오는 밤, 마지막 등불을 지켜라.</p>
+      <nav class="title-menu">
+        <button class="btn btn-primary btn-lg" id="btn-play">출정하기</button>
+        <button class="btn" id="btn-codex">도감</button>
+        <button class="btn" id="btn-help">조작법</button>
+        <button class="btn" id="btn-settings">설정</button>
+      </nav>
+    </div>
+    <p class="title-foot">타워 6종 · 분기 진화 12종 · 룬 25종 · 영웅 3명 · 스테이지 3곳 + 무한 모드</p>
+  </section>
+
+  <!-- ── 원정지 선택 ── -->
+  <section class="screen screen-stages" id="scr-stages" hidden>
+    <header class="stages-head">
+      <button class="icon-btn" id="btn-back" aria-label="뒤로">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div>
+        <p class="eyebrow">CHOOSE YOUR BATTLE</p>
+        <h2>원정지 선택</h2>
+      </div>
+    </header>
+    <div class="stage-list" id="stage-list"></div>
+    <div class="loadout">
+      <div class="loadout-col">
+        <h4>영웅</h4>
+        <div class="hero-options" id="hero-options"></div>
+      </div>
+      <div class="loadout-col loadout-side">
+        <h4>난이도</h4>
+        <div class="seg" id="diff-seg"></div>
+        <p class="diff-note" id="diff-note"></p>
+        <label class="check" id="endless-wrap">
+          <input type="checkbox" id="endless-check">
+          <span>무한 모드 <small id="endless-note"></small></span>
+        </label>
+        <button class="btn btn-primary btn-lg btn-start" id="btn-start">전투 개시</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 게임 ── -->
+  <section class="screen screen-game" id="scr-game" hidden>
+    <header class="hud">
+      <div class="hud-group">
+        <div class="stat stat-lives" title="생명 — 0이 되면 패배">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.5 1.2 5.4 3.2 1.9-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg>
+          <span id="hud-lives">20</span>
+        </div>
+        <div class="stat stat-gold" title="골드">
+          <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="currentColor"/><circle cx="12" cy="12" r="6" fill="none" stroke="#a7742a" stroke-width="1.6"/><path d="M12 8.5l1.2 2.3 2.3 1.2-2.3 1.2L12 15.5l-1.2-2.3L8.5 12l2.3-1.2z" fill="#a7742a"/></svg>
+          <span id="hud-gold">0</span>
+        </div>
+        <div class="stat stat-wave" title="웨이브">
+          <span class="lbl">웨이브</span>
+          <span id="hud-wave">0/15</span>
+        </div>
+      </div>
+      <div class="hud-center">
+        <button class="btn-next" id="btn-next">
+          <span class="nx-label" id="nx-label">전투 시작</span>
+          <span class="nx-sub" id="nx-sub"></span>
+          <kbd>N</kbd>
+        </button>
+        <div class="wave-preview" id="wave-preview" aria-label="다음 웨이브 구성"></div>
+      </div>
+      <div class="hud-group hud-right">
+        <div class="speed-group" role="group" aria-label="게임 속도">
+          <button data-speed="1" class="on">1×</button>
+          <button data-speed="2">2×</button>
+          <button data-speed="3">3×</button>
+        </div>
+        <button class="icon-btn" id="btn-pause" aria-label="일시정지 (Space)">
+          <svg viewBox="0 0 24 24" width="20" height="20"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="stage-area" id="stage-area">
+      <div class="canvas-holder" id="canvas-holder">
+        <canvas id="game-canvas"></canvas>
+        <div class="boss-bar" id="boss-bar" hidden>
+          <span class="boss-name" id="boss-name"></span>
+          <div class="boss-track"><i class="boss-fill" id="boss-fill"></i><i class="boss-shield" id="boss-shield"></i></div>
+        </div>
+        <div class="banner" id="banner"><b id="banner-title"></b><span id="banner-sub"></span></div>
+      </div>
+      <div class="res-panel" id="res-panel"></div>
+      <div class="toasts" id="toasts"></div>
+      <div class="coach" id="coach" hidden><span id="coach-text"></span><button id="coach-skip" aria-label="도움말 닫기">닫기</button></div>
+      <aside class="info-panel" id="info" hidden></aside>
+      <div class="intro-card" id="intro-card" hidden></div>
+    </main>
+
+    <footer class="dock">
+      <div class="dock-hero">
+        <button class="hero-card" id="hero-card" title="영웅 선택 (H)">
+          <canvas id="hero-portrait"></canvas>
+          <span class="hero-meta">
+            <b id="hero-name">영웅</b>
+            <span class="hero-lv" id="hero-lv">Lv.1</span>
+            <span class="bar bar-hp"><i id="hero-hp"></i></span>
+            <span class="bar bar-xp"><i id="hero-xp"></i></span>
+          </span>
+          <span class="respawn" id="hero-respawn" hidden></span>
+        </button>
+        <button class="ability" id="skill-btn" data-ability="skill">
+          <canvas></canvas>
+          <span class="ab-cd"></span>
+          <kbd>E</kbd>
+        </button>
+      </div>
+      <div class="dock-towers" id="dock-towers"></div>
+      <div class="dock-spells" id="dock-spells"></div>
+    </footer>
+  </section>
+
+  <div class="modal-layer" id="modal" hidden></div>
+  <div class="tooltip" id="tooltip" hidden></div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/game.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
