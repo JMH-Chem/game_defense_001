@@ -192,15 +192,23 @@ const ENEMIES = {
     trait: '실체가 없어 병사와 영웅이 막을 수 없습니다. 마법 저항 75%.' },
   knight: { name: '공허 방패병', hp: 130, shield: 130, speed: 0.72, armor: 0.3, gold: 13, lives: 2, atk: 11, atkCd: 1.3, size: 14, cost: 3.4, interval: 1.6, weight: 1.4,
     trait: '체력과 같은 양의 보호막이 피해를 먼저 흡수합니다. 방어력 30%.' },
+  troll: { name: '늪 트롤', hp: 230, speed: 0.68, armor: 0.2, gold: 14, lives: 2, atk: 16, atkCd: 1.4, size: 17, cost: 3.6, interval: 1.6, weight: 1.4,
+    regen: 0.025, trait: '초당 최대 체력의 2.5%를 재생합니다. 불에 타는 동안에는 재생하지 못합니다.' },
+  burrower: { name: '땅굴벌레', hp: 95, speed: 1.0, gold: 8, lives: 1, atk: 6, atkCd: 1.0, size: 12, cost: 2.2, interval: 1.0, weight: 1.4,
+    burrow: { every: 4, dur: 1.8, speedMul: 1.8 }, trait: '주기적으로 땅속으로 파고들어 1.8초 동안 공격받지 않고 빠르게 이동합니다.' },
+  hexer: { name: '저주술사', hp: 110, speed: 0.8, mres: 0.4, gold: 14, lives: 1, atk: 6, atkCd: 1.2, size: 12, cost: 3.0, interval: 1.8, weight: 1.0,
+    hex: { cd: 6, range: 3, dur: 3 }, trait: '6초마다 가장 가까운 타워 하나를 3초 동안 마비시킵니다. 마법 저항 40%.' },
   ogre: { name: '오우거 족장', hp: 2400, speed: 0.48, armor: 0.3, gold: 150, lives: 10, atk: 45, atkCd: 1.6, size: 26, boss: true, cost: 30,
     stomp: { cd: 5, radius: 1.7, dmg: 60, stun: 1.5 }, trait: '보스. 막아선 병사들을 주기적으로 짓밟아 기절시킵니다.' },
   drake: { name: '그림자 비룡', hp: 3400, speed: 0.45, mres: 0.35, flying: true, gold: 200, lives: 10, size: 28, boss: true, cost: 40,
     brood: { type: 'bat', count: 3, step: 0.2 }, trait: '비행 보스. 체력이 20% 줄어들 때마다 박쥐 떼를 풀어놓습니다.' },
+  hydra: { name: '늪의 히드라', hp: 4600, speed: 0.42, armor: 0.25, mres: 0.25, gold: 240, lives: 15, atk: 40, atkCd: 1.2, size: 28, boss: true, cost: 45,
+    regen: 0.012, cleave: 3, trait: '보스. 초당 체력 1.2%를 재생하고(불타는 동안 멈춤), 막아선 병사를 최대 3명까지 동시에 공격합니다.' },
   lord: { name: '어둠의 군주', hp: 12000, speed: 0.4, armor: 0.35, mres: 0.35, gold: 400, lives: 99, atk: 80, atkCd: 1.5, size: 30, boss: true, cost: 60,
     summon: { type: 'imp', count: 3, cd: 8 }, ward: { at: 0.5, pct: 0.3 },
     trait: '최종 보스. 졸개를 소환하고 체력이 절반이 되면 거대한 보호막을 펼칩니다. 등불에 닿으면 즉시 패배.' },
 };
-const ENEMY_CODEX_ORDER = ['imp', 'runner', 'bat', 'brute', 'shaman', 'slime', 'wraith', 'knight', 'ogre', 'drake', 'lord'];
+const ENEMY_CODEX_ORDER = ['imp', 'runner', 'bat', 'brute', 'shaman', 'slime', 'wraith', 'knight', 'troll', 'burrower', 'hexer', 'ogre', 'drake', 'hydra', 'lord'];
 
 // ── 영웅 ─────────────────────────────────────────────────────
 const HEROES = {
@@ -280,6 +288,8 @@ const THEMES = {
     decos: ['pine', 'pine', 'pine', 'icerock', 'crystal'], ambient: 'snow', dark: 0.3, portal: '#6fd3ff', tint: 'rgba(60,90,140,0.10)' },
   ruins: { ground: '#1c1724', ground2: '#221c2c', speck: '#3a2e47', grass: '#4a3a5a', path: '#4a3c47', pathEdge: '#221a24', pathSpeck: '#6f5d6c',
     decos: ['pillar', 'rubble', 'deadtree', 'pillar', 'brazier'], ambient: 'ember', dark: 0.48, portal: '#ff5d8f', tint: 'rgba(90,40,80,0.10)' },
+  swamp: { ground: '#121c17', ground2: '#18261f', speck: '#28392f', grass: '#3f5c3b', path: '#3b3828', pathEdge: '#1b1a12', pathSpeck: '#5c5640',
+    decos: ['pool', 'pool', 'reed', 'reed', 'stump', 'mushroom'], ambient: 'wisp', dark: 0.5, portal: '#7dff9a', tint: 'rgba(40,80,50,0.10)' },
 };
 
 const STAGES = [
@@ -309,6 +319,17 @@ const STAGES = [
     ],
     unlocks: { imp: 1, runner: 1, bat: 3, brute: 4, slime: 5, wraith: 6, shaman: 7, knight: 8 },
     bosses: { 10: 'ogre', 15: 'drake', 20: 'lord' },
+  },
+  {
+    id: 4, name: '독안개 늪', en: 'MIREFEN SWAMP', theme: 'swamp',
+    desc: '두 길이 한가운데서 엇갈리는 독안개 늪. 재생하는 트롤, 땅을 파는 벌레, 타워를 마비시키는 저주술사가 기다립니다.',
+    waves: 18, startGold: 420, hpMul: 1.2, budgetMul: 1.05, lateMul: 1.15, seed: 53,
+    paths: [
+      [[-1, 3], [5, 3], [5, 8], [11, 8], [11, 4], [16, 4], [16, 9], [18, 9]],
+      [[8, -1], [8, 10], [18, 10], [18, 9]],
+    ],
+    unlocks: { imp: 1, runner: 1, slime: 2, troll: 3, bat: 4, burrower: 5, hexer: 7, brute: 8, shaman: 10, wraith: 12, knight: 13 },
+    bosses: { 9: 'ogre', 18: 'hydra' },
   },
 ];
 

@@ -437,7 +437,7 @@ class Game {
   explode(x, y, r, dmg, type, src, o = {}) {
     let hits = 0;
     for (const e of this.enemies) {
-      if (!e.alive || (e.flying && !o.air)) continue;
+      if (!e.alive || e.burrowed || (e.flying && !o.air)) continue;
       const rr = r + e.size * 0.5;
       if (dist2(e.x, e.y, x, y) > rr * rr) continue;
       this.dealDamage(e, dmg, type, src, o);
@@ -473,7 +473,7 @@ class Game {
       return;
     }
     const t = p.target;
-    if (!t.alive) return;
+    if (!t.alive || t.burrowed) return;
     this.dealDamage(t, p.dmg, p.dmgType, p.src, opts);
     const col = p.kind === 'shard' ? '#bfeaff' : p.kind === 'bolt' ? '#ffe9a8' : '#f5e3b5';
     this.fxSpark(p.tx, p.ty, col, p.kind === 'bolt' ? 6 : 3, 60, 0.25, 1.6);

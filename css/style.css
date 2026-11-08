@@ -132,9 +132,10 @@ kbd {
     var(--night-0);
   user-select: none;
 }
-.stages-head { display: flex; align-items: center; gap: 14px; max-width: 1120px; margin: 0 auto 18px; }
+.stages-head { display: flex; align-items: center; gap: 14px; max-width: 1200px; margin: 0 auto 18px; }
 .stages-head h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 30px; }
-.stage-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1120px; margin: 0 auto; }
+.stage-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 1200px; margin: 0 auto; }
+@media (max-width: 1180px) { .stage-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 880px; } }
 .stage-card {
   position: relative; text-align: left;
   border-radius: 14px; border: 1px solid var(--line);
@@ -160,7 +161,7 @@ kbd {
 .stage-card.locked canvas { filter: grayscale(1) brightness(0.35); }
 .lock-note { position: absolute; top: 10px; left: 10px; font-size: 12px; padding: 4px 10px; border-radius: 99px; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--line-strong); }
 
-.loadout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; max-width: 1120px; margin: 22px auto 0; }
+.loadout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; max-width: 1200px; margin: 22px auto 0; }
 .loadout h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.2em; color: var(--muted); font-weight: 500; }
 .hero-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .hero-opt {

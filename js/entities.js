@@ -120,7 +120,9 @@ class Enemy {
     this.swing = 0;
     this.t = rand(0, 10);
     this.walk = rand(0, 20);
-    const abil = def.heal || def.stomp || def.summon;
+    const abil = def.heal || def.stomp || def.summon || def.hex;
+    this.burrowed = false;
+    this.burrowT = def.burrow ? def.burrow.every * rand(0.4, 1) : 0;
     this.cdA = abil ? abil.cd * rand(0.4, 1) : 0;
     this.broodMark = 1;
     this.warded = false;
@@ -162,6 +164,24 @@ class Enemy {
     if (this.stunT > 0) this.stunT -= dt;
     if (this.freezeT > 0) this.freezeT -= dt;
 
+    if (this.def.regen && this.burnT <= 0 && this.hp < this.maxHp) {
+      this.hp = Math.min(this.maxHp, this.hp + this.maxHp * this.def.regen * dt);
+      if (Math.random() < dt * 3) g.fxSpark(this.x, this.y - this.size, '#7dff9a', 1, 25, 0.5, 2);
+    }
+    if (this.def.burrow) {
+      const b = this.def.burrow;
+      this.burrowT -= dt;
+      if (this.burrowT <= 0) {
+        this.burrowed = !this.burrowed;
+        this.burrowT = this.burrowed ? b.dur : b.every;
+        if (this.burrowed) {
+          const bs = this.blockers.slice();
+          this.blockers.length = 0;
+          for (const k of bs) k.release();
+        }
+        g.fxSpark(this.x, this.y + 4, '#8a6a44', 8, 60, 0.45, 2.5);
+      }
+    }
     this.abilities(dt);
     if (!this.alive) return;
 
@@ -175,10 +195,12 @@ class Enemy {
       if (this.atkT <= 0) {
         this.atkT = this.def.atkCd || 1;
         this.swing = 0.22;
-        this.blockers[0].takeDamage((this.def.atk || 4) * this.atkMul, this);
+        // 공격으로 병사가 죽으면 blockers 배열이 바뀌므로 복사본으로 순회
+        const targets = this.blockers.slice(0, this.def.cleave || 1);
+        for (const b of targets) b.takeDamage((this.def.atk || 4) * this.atkMul, this);
       }
     } else {
-      const sf = Math.max(0.15, 1 - this.slowAmt * (this.boss ? 0.6 : 1));
+      const sf = Math.max(0.15, 1 - this.slowAmt * (this.boss ? 0.6 : 1)) * (this.burrowed ? this.def.burrow.speedMul : 1);
       const v = this.speed * sf * dt;
       this.dist += v;
       this.walk += v;
@@ -243,6 +265,25 @@ class Enemy {
         }
         g.fxRing(this.x, this.y, 8, 70, 0.6, '#b26bff', 3);
         g.sfx('summon');
+      }
+    }
+    if (d.hex) {
+      this.cdA -= dt;
+      if (this.cdA <= 0) {
+        let best = null, bd = (d.hex.range * TILE) ** 2;
+        for (const t of g.towers) {
+          if (t.disabledT > 0 || t.type === 'shrine') continue;
+          const dd = dist2(t.x, t.y, this.x, this.y);
+          if (dd < bd) { bd = dd; best = t; }
+        }
+        if (best) {
+          this.cdA = d.hex.cd;
+          best.disabledT = d.hex.dur;
+          best.beamTarget = null;
+          g.fxBolt([{ x: this.x, y: this.y - 10 }, { x: best.x, y: best.y - 20 }], '#b26bff');
+          g.fxRing(best.x, best.y - 8, 6, 26, 0.5, '#b26bff', 3);
+          g.sfx('hex');
+        } else this.cdA = 0.5;
       }
     }
     if (d.ward && !this.warded && this.hp / this.maxHp <= d.ward.at) {
@@ -358,7 +399,7 @@ class Soldier {
     const r2 = this.engage * this.engage;
     let best = null, bestScore = Infinity;
     for (const e of g.enemies) {
-      if (!e.alive || e.flying || e.ethereal) continue;
+      if (!e.alive || e.flying || e.ethereal || e.burrowed) continue;
       if (dist2(e.x, e.y, this.rx, this.ry) > r2) continue;
       const score = Math.min(e.claims, 3) * 100000 + e.remaining();
       if (score < bestScore) { bestScore = score; best = e; }
@@ -523,7 +564,7 @@ class Hero {
     const r2 = this.engage * this.engage;
     let best = null, bestScore = Infinity;
     for (const e of g.enemies) {
-      if (!e.alive || e.flying || e.ethereal) continue;
+      if (!e.alive || e.flying || e.ethereal || e.burrowed) continue;
       if (dist2(e.x, e.y, this.hx, this.hy) > r2) continue;
       const score = Math.min(e.claims, 3) * 100000 + e.remaining();
       if (score < bestScore) { bestScore = score; best = e; }
@@ -594,7 +635,7 @@ class Hero {
     let best = null, bv = Infinity;
     const r = this.range;
     for (const e of g.enemies) {
-      if (!e.alive) continue;
+      if (!e.alive || e.burrowed) continue;
       const rr = r + e.size * 0.5;
       if (dist2(e.x, e.y, this.x, this.y) > rr * rr) continue;
       const v = e.remaining();
@@ -721,7 +762,7 @@ class Tower {
     let best = null, bv = Infinity;
     const air = !!this.e.air;
     for (const e of this.game.enemies) {
-      if (!e.alive || (e.flying && !air)) continue;
+      if (!e.alive || e.burrowed || (e.flying && !air)) continue;
       if (exclude && exclude.has(e)) continue;
       if (!this.inRange(e)) continue;
       const v = this.score(e);
@@ -736,6 +777,12 @@ class Tower {
     if (this.buildT > 0) this.buildT -= dt;
     if (this.flash > 0) this.flash -= dt;
     const k = this.e.kind;
+    if (this.disabledT > 0) {
+      this.disabledT -= dt;
+      this.flameOn = false;
+      if (k === 'barracks') this.updateBarracks(dt);
+      return;
+    }
     if (k === 'support') return;
     if (k === 'barracks') { this.updateBarracks(dt); return; }
     if (k === 'beam') { this.updateBeam(dt); return; }
@@ -836,7 +883,7 @@ class Tower {
       dmg *= e.chainFalloff;
       let nb = null, nd = (e.chainRange * TILE) ** 2;
       for (const o of g.enemies) {
-        if (!o.alive || hit.has(o) || (o.flying && !e.air)) continue;
+        if (!o.alive || o.burrowed || hit.has(o) || (o.flying && !e.air)) continue;
         const d2 = dist2(cur.x, cur.y, o.x, o.y);
         if (d2 < nd) { nd = d2; nb = o; }
       }
@@ -849,7 +896,7 @@ class Tower {
   updateBeam(dt) {
     const g = this.game, e = this.e;
     let t = this.beamTarget;
-    if (!t || !t.alive || !this.inRange(t)) {
+    if (!t || !t.alive || t.burrowed || !this.inRange(t)) {
       const nt = this.findTarget();
       if (nt !== t) this.beamT = 0;
       t = this.beamTarget = nt;
@@ -876,7 +923,7 @@ class Tower {
     const ox = this.x, oy = this.y - 18;
     const ang = Math.atan2(t.y - oy, t.x - ox);
     for (const o of g.enemies) {
-      if (!o.alive || o.flying) continue;
+      if (!o.alive || o.flying || o.burrowed) continue;
       const dx = o.x - ox, dy = o.y - oy;
       const d2 = dx * dx + dy * dy;
       const rr = r + o.size * 0.5;
@@ -903,7 +950,7 @@ class Tower {
     let any = false;
     const r = e.range * TILE;
     for (const o of g.enemies) {
-      if (!o.alive) continue;
+      if (!o.alive || o.burrowed) continue;
       if (dist2(o.x, o.y, this.x, this.y) > (r + o.size * 0.5) ** 2) continue;
       g.dealDamage(o, e.dmg, 'magic', this, { slow: e.slow, slowDur: e.slowDur, canCrit: false });
       any = true;

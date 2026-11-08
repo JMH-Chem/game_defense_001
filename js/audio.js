@@ -107,6 +107,7 @@ const Sfx = {
       case 'stomp': this.tone('sine', 70, 30, 0.45, 0.6); this.noise(0.4, 0.4, 300, 0.6, 'lowpass'); break;
       case 'screech': this.tone('sawtooth', 1200, 500, 0.3, 0.08); this.tone('sawtooth', 1500, 700, 0.25, 0.06, 0.05); break;
       case 'summon': this.tone('sawtooth', 160, 90, 0.5, 0.12); this.tone('sine', 320, 640, 0.4, 0.06); break;
+      case 'hex': this.tone('sawtooth', 300, 120, 0.35, 0.08); this.tone('sine', 900, 400, 0.3, 0.05, 0.05); break;
       case 'ward': [330, 415, 494].forEach((f, i) => this.tone('sine', f, f * 1.5, 0.6, 0.08, i * 0.1)); break;
       case 'meteor': this.noise(0.9, 0.18, 1800, 0.6, 'bandpass', 0, 300); break;
       case 'summon2': [392, 494, 587].forEach((f, i) => this.tone('square', f, f, 0.1, 0.06, i * 0.05)); break;
