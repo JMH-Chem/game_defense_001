@@ -102,7 +102,7 @@ class Enemy {
     this.shield = this.maxShield;
     this.armor = def.armor || 0;
     this.mres = def.mres || 0;
-    this.speed = def.speed * TILE;
+    this.speed = def.speed * TILE * (game.ch ? game.ch.speed : 1);
     this.size = def.size;
     this.atkMul = 0.5 + 0.5 * hpMul;
     this.offset = this.boss ? 0 : rand(-9, 9);

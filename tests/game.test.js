@@ -173,3 +173,21 @@ test('저장·이어하기: 스냅샷을 복원하면 타워·골드·웨이브�
   assert.equal(r.countdown != null, true);
   assert.equal(r.waveInfo.n, 7);
 });
+
+test('오늘의 도전: 날짜마다 고정이고, 모든 규칙이 오류 없이 적용·진행된다', () => {
+  const { dailyChallenge, CHALLENGE_RULES } = api;
+  assert.deepEqual(JSON.parse(JSON.stringify(dailyChallenge('20261109'))), JSON.parse(JSON.stringify(dailyChallenge('20261109'))));
+  const days = new Set(Array.from({ length: 30 }, (_, i) => JSON.stringify(dailyChallenge(String(20261101 + i)).rules)));
+  assert.ok(days.size > 5, '날짜가 바뀌면 규칙도 바뀐다');
+  for (const id of Object.keys(CHALLENGE_RULES)) {
+    const g = newGame(0, { challenge: { key: 'x', stage: 0, hero: 'aren', rules: [id], seed: 3 } });
+    g.gold = 3000;
+    for (const [c, r, t] of [[3, 3, 'archer'], [5, 4, 'cannon'], [8, 7, 'frost'], [10, 4, 'arcane']]) g.build(t, c, r);
+    g.on('runes', () => g.chooseRune(0));
+    g.startWave();
+    for (let i = 0; i < 60 * 40; i++) g.update(1 / 60);
+    assert.ok(g.wave >= 2, `${id}: 진행되지 않음`);
+  }
+  const banned = newGame(0, { challenge: { key: 'x', stage: 0, hero: 'aren', rules: ['banned'], seed: 3 } });
+  assert.equal(banned.build(banned.ch.banned, 3, 3).ok, false);
+});

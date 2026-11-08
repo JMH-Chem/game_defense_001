@@ -9,7 +9,7 @@
 - 조작 가능한 영웅 4명, 주문 2종
 - 원정지 5곳 (보통 / 영웅 난이도, 별 3개 평가) + 원정지별 무한 모드
 - 일반 적 13종 + 보스 5종 (재생·잠복·타워 마비·자폭·부활 같은 기믹)
-- 별 강화(영구 성장 6트랙), 업적 21종, 전투 이어하기
+- 별 강화(영구 성장 6트랙), 업적 22종, 오늘의 도전(날짜별 규칙 변형), 전투 이어하기
 - 그래픽·사운드 전부 코드로 생성 — 이미지·음원 파일 없음
 - 데스크톱 · 모바일(터치) 지원, 진행 상황 자동 저장
 
@@ -80,7 +80,7 @@ docs/DESIGN.md    게임 기획서
 npm test
 ```
 
-데이터 무결성, 피해 공식, 경제, 룬 전체, 신규 기믹, 저장 복원, 모든 원정지 완주까지 14개 테스트를 시드 고정으로 돌립니다. PR과 `main` 푸시마다 GitHub Actions(`.github/workflows/ci.yml`)에서도 실행됩니다.
+데이터 무결성, 피해 공식, 경제, 룬 전체, 신규 기믹, 저장 복원, 모든 원정지 완주까지 15개 테스트를 시드 고정으로 돌립니다. PR과 `main` 푸시마다 GitHub Actions(`.github/workflows/ci.yml`)에서도 실행됩니다.
 
 `main` 을 GitHub Pages로 배포하려면 저장소 Settings → Pages 에서 Source를 **GitHub Actions** 로 바꾸고, Settings → Secrets and variables → Actions → Variables 에 `PAGES_ENABLED` = `true` 를 추가하세요.
 

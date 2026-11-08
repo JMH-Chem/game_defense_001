@@ -86,6 +86,13 @@ class Game {
     }
     this.hero.recalc();
     this.hero.hp = this.hero.maxHp;
+    // 오늘의 도전 규칙
+    this.ch = { speed: 1, hp: 1, gold: 1, count: 1, runeEvery: RUNE_EVERY, banned: null };
+    this.challenge = this.opts.challenge || null;
+    if (this.challenge) {
+      const rng = mulberry32(this.challenge.seed || 1);
+      for (const id of this.challenge.rules) if (CHALLENGE_RULES[id]) CHALLENGE_RULES[id].apply(this, rng);
+    }
     this.waveInfo = this.buildWave(1);
   }
 
@@ -143,8 +150,8 @@ class Game {
 
   // ── 웨이브 생성 (시드 고정 → 매번 동일한 구성, 미리보기 가능) ──
   diffHpMul(n) { return this.diff.hpBase + this.diff.hpRamp * n; }
-  waveHpMul(n) { return (1 + 0.1 * (n - 1) + 0.015 * (n - 1) ** 2) * this.stage.hpMul * this.diffHpMul(n); }
-  bossHpMul(n) { return (1 + 0.045 * (n - 1) + (n > 20 ? 0.004 * (n - 20) ** 2 : 0)) * this.stage.hpMul * this.diffHpMul(n); }
+  waveHpMul(n) { return (1 + 0.1 * (n - 1) + 0.015 * (n - 1) ** 2) * this.stage.hpMul * this.diffHpMul(n) * (this.ch ? this.ch.hp : 1); }
+  bossHpMul(n) { return (1 + 0.045 * (n - 1) + (n > 20 ? 0.004 * (n - 20) ** 2 : 0)) * this.stage.hpMul * this.diffHpMul(n) * (this.ch ? this.ch.hp : 1); }
 
   bossFor(n) {
     const st = this.stage;
@@ -161,7 +168,7 @@ class Game {
       ? Object.keys(ENEMIES).filter((k) => ENEMIES[k].weight > 0)
       : Object.keys(st.unlocks).filter((t) => st.unlocks[t] <= n);
     const fresh = n > 1 && n <= st.waves ? pool.filter((t) => st.unlocks[t] === n) : [];
-    let budget = (7 + n * 3.0 + n * n * 0.13 * (st.lateMul || 1)) * st.budgetMul;
+    let budget = (7 + n * 3.0 + n * n * 0.13 * (st.lateMul || 1)) * st.budgetMul * (this.ch ? this.ch.count : 1);
     const bossType = this.bossFor(n);
     if (bossType) budget *= 0.5;
     const nGroups = Math.min(4, 1 + Math.floor(n / 4));
@@ -249,7 +256,7 @@ class Game {
 
   onWaveSpawned(n) {
     if (n < this.totalWaves) this.countdown = WAVE_GAP;
-    if (n % RUNE_EVERY === 0 && n < this.totalWaves) this.offerRunes(false);
+    if (n % this.ch.runeEvery === 0 && n < this.totalWaves) this.offerRunes(false);
   }
 
   spawnEnemy(type, pathIdx, hpMul, startDist = 0, boss = false) {
@@ -283,6 +290,7 @@ class Game {
 
   build(type, c, r) {
     if (this.state === 'won' || this.state === 'lost') return { ok: false };
+    if (this.ch.banned === type) return { ok: false, reason: `오늘의 도전: ${TOWERS[type].name}은 지을 수 없습니다` };
     if (!this.canBuild(c, r)) return { ok: false, reason: '이곳에는 건설할 수 없습니다' };
     const cost = this.buildCost(type);
     if (this.gold < cost) return { ok: false, reason: '골드가 부족합니다' };
@@ -491,7 +499,7 @@ class Game {
 
   onEnemyKilled(e, src) {
     this.stats.kills++;
-    let gold = e.def.gold * (1 + 0.03 * (this.wave - 1)) * this.diff.goldMul * (1 + this.mods.goldMul);
+    let gold = e.def.gold * (1 + 0.03 * (this.wave - 1)) * this.diff.goldMul * (1 + this.mods.goldMul) * this.ch.gold;
     for (const t of this.towers) {
       if (t.type === 'shrine' && t.e.killBonus && dist2(t.x, t.y, e.x, e.y) <= (t.e.range * TILE) ** 2) { gold += t.e.killBonus; break; }
     }
@@ -682,7 +690,7 @@ class Game {
     const h = this.hero;
     return {
       v: 1,
-      opts: { stage: this.stageIdx, hero: this.heroId, difficulty: this.diffId, endless: this.endless, meta: this.meta },
+      opts: { stage: this.stageIdx, hero: this.heroId, difficulty: this.diffId, endless: this.endless, meta: this.meta, challenge: this.challenge },
       wave: this.wave, gold: this.gold, lives: this.lives, maxLives: this.maxLives, time: this.time,
       stats: Object.assign({}, this.stats), runes: this.runes.map((r) => r.id), seen: Array.from(this.seen),
       spells: Object.assign({}, this.spells),
@@ -734,6 +742,10 @@ class Game {
   }
 
   // ── 결과 ──
+  get score() {
+    return this.state === 'won' ? 10000 + this.lives * 300 + this.stats.kills * 2 : this.wave * 400 + this.stats.kills * 2;
+  }
+
   win() {
     this.state = 'won';
     const ratio = this.lives / this.diff.lives;

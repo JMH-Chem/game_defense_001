@@ -122,6 +122,17 @@ kbd {
 .title-menu .btn-primary { grid-column: 1 / -1; }
 .title-menu .btn-continue { grid-column: 1 / -1; min-height: 46px; border-color: rgba(255, 196, 107, 0.6); color: var(--lantern); background: rgba(255, 196, 107, 0.08); }
 .btn-continue small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+.title-menu .btn-daily { grid-column: 1 / -1; }
+.btn-daily small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+.daily-card { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.daily-card canvas { border-radius: 12px; border: 1px solid var(--line); }
+.daily-rules { display: grid; gap: 8px; }
+.daily-rule { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255, 196, 107, 0.35); background: rgba(255, 196, 107, 0.06); }
+.daily-rule b { display: block; font-size: 14px; color: var(--lantern); }
+.daily-rule span { font-size: 12px; color: var(--muted); }
+.tower-btn.banned { opacity: 0.35; filter: grayscale(1); }
+.tower-btn.banned::after { content: "금지"; position: absolute; top: 4px; right: 4px; font-size: 10px; font-weight: 700; color: var(--bad); }
+@media (max-width: 640px) { .daily-card { grid-template-columns: minmax(0, 1fr); } }
 .title-foot { position: absolute; bottom: max(14px, env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px; margin: 0; text-align: center; font-size: 12px; color: var(--dim); letter-spacing: 0.04em; }
 
 /* 원정지 선택 */

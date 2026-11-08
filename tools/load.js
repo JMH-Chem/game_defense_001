@@ -11,7 +11,7 @@ const ROOT = path.join(__dirname, '..');
 const FILES = ['js/util.js', 'js/data.js', 'js/entities.js', 'js/game.js'];
 const EXPORTS = ['Game', 'Path', 'Enemy', 'Tower', 'Soldier', 'Hero', 'Projectile', 'STAGES', 'TOWERS', 'ENEMIES', 'HEROES',
   'RUNES', 'RESONANCE', 'THEMES', 'DIFFICULTY', 'TILE', 'COLS', 'ROWS', 'TOWER_ORDER', 'HERO_ORDER', 'ENEMY_CODEX_ORDER',
-  'towerStats', 'computeResonance', 'mulberry32'];
+  'towerStats', 'computeResonance', 'mulberry32', 'CHALLENGE_RULES', 'dailyChallenge', 'UPGRADES'];
 
 function loadGame({ seed } = {}) {
   const code = FILES.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n') +

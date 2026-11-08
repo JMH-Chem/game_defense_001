@@ -396,6 +396,28 @@ const DIFFICULTY = {
   hard: { name: '영웅', hpBase: 1.08, hpRamp: 0.012, lives: 12, goldMul: 0.95, desc: '적 체력 +10%~+35% (웨이브마다 증가), 생명 12, 처치 골드 -5%' },
 };
 
+// ── 오늘의 도전: 날짜 시드로 원정지·영웅·규칙 2개를 고릅니다 ──
+const CHALLENGE_RULES = {
+  swift: { name: '질주의 밤', desc: '적 이동 속도 +25%', apply: (g) => { g.ch.speed *= 1.25; } },
+  tough: { name: '강철의 밤', desc: '적 체력 +30%, 처치 골드 +20%', apply: (g) => { g.ch.hp *= 1.3; g.ch.gold *= 1.2; } },
+  poor: { name: '궁핍', desc: '시작 골드 -35%, 처치 골드 +15%', apply: (g) => { g.gold = Math.round(g.gold * 0.65); g.ch.gold *= 1.15; } },
+  glass: { name: '유리 대포', desc: '모든 타워 피해 +40%, 생명 5', apply: (g) => { g.mods.dmg.all += 0.4; g.lives = 5; g.maxLives = 5; } },
+  runic: { name: '룬의 밤', desc: '룬을 2웨이브마다 선택', apply: (g) => { g.ch.runeEvery = 2; } },
+  banned: { name: '금지된 탑', desc: '무작위 타워 1종을 지을 수 없음', apply: (g, rng) => { g.ch.banned = ['archer', 'cannon', 'frost', 'arcane'][Math.floor(rng() * 4)]; } },
+  rich: { name: '황금의 밤', desc: '시작 골드 +400, 처치 골드 -35%', apply: (g) => { g.gold += 400; g.ch.gold *= 0.65; } },
+  swarm: { name: '떼거리', desc: '적 수 +40%, 적 체력 -25%', apply: (g) => { g.ch.count *= 1.4; g.ch.hp *= 0.75; } },
+};
+
+function dailyChallenge(dateKey) {
+  const rng = mulberry32(Number(dateKey) * 2654435761);
+  const stage = Math.floor(rng() * STAGES.length);
+  const hero = HERO_ORDER[Math.floor(rng() * HERO_ORDER.length)];
+  const keys = Object.keys(CHALLENGE_RULES);
+  const a = keys.splice(Math.floor(rng() * keys.length), 1)[0];
+  const b = keys[Math.floor(rng() * keys.length)];
+  return { key: String(dateKey), stage, hero, rules: [a, b], seed: Math.floor(rng() * 1e9) };
+}
+
 const WAVE_GAP = 18;      // 웨이브 사이 자동 시작까지의 초
 const RUNE_EVERY = 3;     // 몇 웨이브마다 룬 선택
 const REROLL_COST = 30;

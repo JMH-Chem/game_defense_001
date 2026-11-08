@@ -54,6 +54,7 @@ const ACHIEVEMENTS = [
   { id: 'early50', icon: '»', name: '성급한 지휘관', desc: '조기 호출 누적 50회', test: (c) => c.early >= 50 },
   { id: 'upall', icon: '✪', name: '대가', desc: '별 강화를 모두 습득', test: (c) => UPGRADES.every((u) => (c.S.upgrades[u.id] || 0) >= u.levels.length) },
   { id: 'heroes', icon: '☘', name: '모두의 영웅', desc: '네 영웅으로 각각 한 번씩 승리', test: (c) => HERO_ORDER.every((h) => (c.S.life.heroWins || {})[h]) },
+  { id: 'daily', icon: '☀', name: '오늘의 도전자', desc: '오늘의 도전 클리어', test: (c) => Object.values(c.S.daily || {}).some((d) => d.won) },
 ];
 
 const UI = {
@@ -82,6 +83,7 @@ const UI = {
     $('#btn-play').onclick = () => { this.click(); this.showStages(); };
     $('#btn-continue').onclick = () => { this.click(); if (!App.resume()) this.toast('저장된 전투를 불러오지 못했습니다'); };
     $('#btn-codex').onclick = () => { this.click(); this.openCodex('tower'); };
+    $('#btn-daily').onclick = () => { this.click(); this.openDaily(); };
     $('#btn-help').onclick = () => { this.click(); this.openHelp(); };
     $('#btn-settings').onclick = () => { this.click(); this.openSettings(); };
     $('#btn-back').onclick = () => { this.click(); this.show('title'); };
@@ -101,7 +103,40 @@ const UI = {
 
   click() { Sfx.play('click'); },
 
+  todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  },
+
+  openDaily() {
+    const ch = dailyChallenge(this.todayKey());
+    const best = (Save.data.daily || {})[ch.key];
+    const st = STAGES[ch.stage], h = HEROES[ch.hero];
+    const m = this.openModal(`
+      <div class="modal-head"><p class="eyebrow">DAILY CHALLENGE · ${ch.key.slice(0, 4)}.${ch.key.slice(4, 6)}.${ch.key.slice(6)}</p><h2>오늘의 도전</h2>
+        <p class="modal-sub">모두에게 같은 원정지·영웅·규칙이 주어집니다. 별 강화는 적용되지 않으며, 원정지 해금 여부와 상관없이 도전할 수 있습니다.</p></div>
+      <div class="daily-card">
+        <div><canvas id="daily-thumb"></canvas><p style="margin:8px 0 0"><b>${esc(st.name)}</b> · 영웅 <b style="color:${h.color}">${esc(h.name)}</b> · 보통 난이도</p></div>
+        <div class="daily-rules">${ch.rules.map((id) => `<div class="daily-rule"><b>${esc(CHALLENGE_RULES[id].name)}</b><span>${esc(CHALLENGE_RULES[id].desc)}</span></div>`).join('')}
+          <p class="modal-sub" style="text-align:left">${best ? `오늘 최고 점수 <b style="color:var(--gold)">${fmt(best.score)}</b>${best.won ? ' · 클리어' : ''}` : '아직 오늘 기록이 없습니다.'}</p></div>
+      </div>
+      <div class="modal-actions"><button class="btn" data-a="close">닫기</button><button class="btn btn-primary" data-a="go">도전 시작</button></div>`, { cls: 'modal-wide', esc: () => this.closeModal(), pause: false });
+    requestAnimationFrame(() => Icons.stageThumb($('#daily-thumb', m), ch.stage, 420, 252));
+    $('[data-a=close]', m).onclick = () => { this.click(); this.closeModal(); };
+    $('[data-a=go]', m).onclick = () => {
+      this.click();
+      RunSave.clear();
+      App.start({ stage: ch.stage, hero: ch.hero, difficulty: 'normal', endless: false, meta: {}, challenge: ch });
+    };
+  },
+
   refreshContinue() {
+    const ds = $('#daily-sub');
+    if (ds) {
+      const ch = dailyChallenge(this.todayKey());
+      const best = (Save.data.daily || {})[ch.key];
+      ds.textContent = `${STAGES[ch.stage].name} · ${ch.rules.map((id) => CHALLENGE_RULES[id].name).join(' + ')}${best ? ` · 최고 ${fmt(best.score)}` : ''}`;
+    }
     const b = $('#btn-continue');
     const run = RunSave.load();
     b.hidden = !run || !STAGES[run.opts.stage];
@@ -363,6 +398,7 @@ const UI = {
     if (!g || g.state === 'won' || g.state === 'lost') return;
     const v = App.view;
     this.hideTip();
+    if (g.ch.banned === type) { Sfx.play('deny'); this.toast(`오늘의 도전: ${TOWERS[type].name}은 지을 수 없습니다`, 'warn'); return; }
     if (v.mode === 'build' && v.buildType === type) { this.cancelMode(); return; }
     this.click();
     v.selected = null;
@@ -641,6 +677,7 @@ const UI = {
       const costEl = $('.t-cost span', b);
       if (costEl.textContent !== String(cost)) costEl.textContent = cost;
       b.classList.toggle('poor', g.gold < cost);
+      b.classList.toggle('banned', g.ch.banned === type);
       b.classList.toggle('armed', App.view.mode === 'build' && App.view.buildType === type);
     });
     $$('#dock-spells .ability').forEach((b) => {
@@ -1240,7 +1277,14 @@ const UI = {
     const st = g.stage;
     const idx = g.stageIdx;
     let newBest = false;
-    if (g.endless) {
+    let dailyLine = '';
+    if (g.challenge) {
+      Save.data.daily = Save.data.daily || {};
+      const prev = Save.data.daily[g.challenge.key];
+      const score = g.score;
+      if (!prev || score > prev.score) Save.data.daily[g.challenge.key] = { score, won: r.won || (prev && prev.won) };
+      dailyLine = `<p class="modal-sub">오늘의 도전 점수 <b style="color:var(--gold)">${fmt(score)}</b>${prev && score <= prev.score ? ` · 오늘 최고 ${fmt(prev.score)}` : ' · 오늘 최고 기록!'}</p>`;
+    } else if (g.endless) {
       const best = Save.data.endlessBest[idx] || 0;
       if (g.wave > best) { Save.data.endlessBest[idx] = g.wave; newBest = true; }
     } else if (r.won) {
@@ -1268,7 +1312,7 @@ const UI = {
       <div><b>Lv.${g.hero.level}</b><span>${esc(g.hero.def.name)}</span></div>
       <div><b>${mins}:${String(secs).padStart(2, '0')}</b><span>전투 시간</span></div></div>`;
     const runes = g.runes.length ? `<div class="owned" style="justify-content:center">${g.runes.map((x) => `<span class="chip r${x.rarity}">${esc(x.name)}</span>`).join('')}</div>` : '';
-    const hasNext = r.won && !g.endless && idx + 1 < STAGES.length;
+    const hasNext = r.won && !g.endless && !g.challenge && idx + 1 < STAGES.length;
     let head;
     if (g.endless) {
       head = `<div class="modal-head"><p class="eyebrow">ENDLESS</p><h2>${g.wave}웨이브까지 버텼습니다</h2><p class="modal-sub">${newBest ? '새로운 최고 기록!' : `최고 기록 ${Save.data.endlessBest[idx]}웨이브`}</p></div>`;
@@ -1279,7 +1323,7 @@ const UI = {
     } else {
       head = `<div class="modal-head defeat"><p class="eyebrow" style="color:var(--life)">DEFEAT</p><h2>등불이 꺼졌습니다</h2><p class="modal-sub">웨이브 ${g.wave}에서 쓰러졌습니다. 공명 조합과 영웅 배치를 바꿔 다시 도전해 보세요.</p></div>`;
     }
-    const m = this.openModal(`${head}${stats}${runes}
+    const m = this.openModal(`${head}${dailyLine}${stats}${runes}
       <div class="modal-actions">
         <button class="btn" data-a="stages">원정지 선택</button>
         <button class="btn ${hasNext ? '' : 'btn-primary'}" data-a="retry">다시 하기</button>
