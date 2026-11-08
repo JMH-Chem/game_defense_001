@@ -6,19 +6,12 @@
 //    node tools/sim.js 0 normal   # 1스테이지 보통만
 // ─────────────────────────────────────────────────────────────
 'use strict';
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
+const { loadGame } = require('./load');
 
-const ROOT = path.join(__dirname, '..');
-const files = ['js/util.js', 'js/data.js', 'js/entities.js', 'js/game.js'];
-const code = files.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n') +
-  '\n;globalThis.__api = { Game, STAGES, TOWERS, TILE, COLS, ROWS, towerStats, ENEMIES, HERO_ORDER };';
-const ctx = { console, Math, Date, JSON, Set, Map, Object, Array, Number, String, Infinity, globalThis: null };
-ctx.globalThis = ctx;
-vm.createContext(ctx);
-vm.runInContext(code, ctx, { filename: 'game-bundle.js' });
-const { Game, STAGES, TOWERS, TILE, COLS, ROWS } = ctx.__api;
+let Game, STAGES, TILE, COLS, ROWS, towerStats;
+// 테스트에서는 시드 고정 난수를 쓴 API로 다시 초기화합니다
+function init(api) { ({ Game, STAGES, TILE, COLS, ROWS, towerStats } = api); }
+init(loadGame());
 
 // ── 봇 성향 ──
 const PROFILES = {
@@ -68,7 +61,6 @@ function bestTile(g, type) {
   }
   return best;
 }
-const towerStats = ctx.__api.towerStats;
 
 function runBot(stageIdx, diff, profileName, heroId = 'aren', verbose = false) {
   const prof = PROFILES[profileName];
@@ -144,31 +136,36 @@ function runBot(stageIdx, diff, profileName, heroId = 'aren', verbose = false) {
   };
 }
 
-const argv = process.argv.slice(2);
-const flags = { v: argv.includes('-v'), n: 1 };
-const ni = argv.indexOf('-n');
-if (ni >= 0) flags.n = Number(argv[ni + 1]);
-const args = argv.filter((a, i) => !a.startsWith('-') && !(ni >= 0 && i === ni + 1));
-const pickArg = (i, all) => (args[i] != null && args[i] !== 'all' ? [args[i]] : all);
-const stages = pickArg(0, STAGES.map((_, i) => String(i))).map(Number);
-const diffs = pickArg(1, ['normal', 'hard']);
-const heroes = pickArg(2, ['aren', 'lyra', 'serin']);
-const profiles = pickArg(3, ['balanced', 'lazy']);
+module.exports = { init, runBot, PROFILES };
+if (require.main === module) main();
 
-const t0 = Date.now();
-for (const s of stages) {
-  for (const d of diffs) {
-    for (const p of profiles) {
-      for (const h of (p === 'lazy' ? ['aren'] : heroes)) {
-        const runs = [];
-        for (let i = 0; i < flags.n; i++) runs.push(runBot(s, d, p, h, flags.v));
-        const wins = runs.filter((r) => r.result === 'won');
-        const avg = (k, arr = runs) => (arr.length ? Math.round(arr.reduce((a, r) => a + r[k], 0) / arr.length) : 0);
-        const minWave = Math.min(...runs.map((r) => r.wave));
-        console.log(`[S${s + 1} ${d.padEnd(6)} ${p.padEnd(8)} ${h.padEnd(5)}] win ${wins.length}/${runs.length}  lives(avg win) ${String(avg('lives', wins)).padStart(2)}  minWave ${String(minWave).padStart(2)}  towers ${avg('towers')} (${avg('maxed')} max)  leftover ${avg('gold')}  earned ${avg('earned')}`);
-        if (flags.v) for (const r of runs) console.log('   ' + r.log.join('\n   '));
+function main() {
+  const argv = process.argv.slice(2);
+  const flags = { v: argv.includes('-v'), n: 1 };
+  const ni = argv.indexOf('-n');
+  if (ni >= 0) flags.n = Number(argv[ni + 1]);
+  const args = argv.filter((a, i) => !a.startsWith('-') && !(ni >= 0 && i === ni + 1));
+  const pickArg = (i, all) => (args[i] != null && args[i] !== 'all' ? [args[i]] : all);
+  const stages = pickArg(0, STAGES.map((_, i) => String(i))).map(Number);
+  const diffs = pickArg(1, ['normal', 'hard']);
+  const heroes = pickArg(2, ['aren', 'lyra', 'serin']);
+  const profiles = pickArg(3, ['balanced', 'lazy']);
+
+  const t0 = Date.now();
+  for (const s of stages) {
+    for (const d of diffs) {
+      for (const p of profiles) {
+        for (const h of (p === 'lazy' ? ['aren'] : heroes)) {
+          const runs = [];
+          for (let i = 0; i < flags.n; i++) runs.push(runBot(s, d, p, h, flags.v));
+          const wins = runs.filter((r) => r.result === 'won');
+          const avg = (k, arr = runs) => (arr.length ? Math.round(arr.reduce((a, r) => a + r[k], 0) / arr.length) : 0);
+          const minWave = Math.min(...runs.map((r) => r.wave));
+          console.log(`[S${s + 1} ${d.padEnd(6)} ${p.padEnd(8)} ${h.padEnd(5)}] win ${wins.length}/${runs.length}  lives(avg win) ${String(avg('lives', wins)).padStart(2)}  minWave ${String(minWave).padStart(2)}  towers ${avg('towers')} (${avg('maxed')} max)  leftover ${avg('gold')}  earned ${avg('earned')}`);
+          if (flags.v) for (const r of runs) console.log('   ' + r.log.join('\n   '));
+        }
       }
     }
   }
+  console.log(`done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 }
-console.log(`done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
