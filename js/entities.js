@@ -182,6 +182,17 @@ class Enemy {
         g.fxSpark(this.x, this.y + 4, '#8a6a44', 8, 60, 0.45, 2.5);
       }
     }
+    if (this.egg > 0) {
+      this.egg -= dt;
+      if (this.egg <= 0) {
+        this.hp = Math.max(this.hp, this.maxHp * this.def.rebirth.hp);
+        g.fxExplosion(this.x, this.y - 20, 60, '#ffb347', true);
+        g.emit('toast', { text: `${this.def.name}이(가) 되살아났습니다!`, kind: 'warn' });
+        g.sfx('ward');
+      }
+      this.place();
+      return;
+    }
     this.abilities(dt);
     if (!this.alive) return;
 
@@ -333,6 +344,7 @@ class Enemy {
     else this.slowT = Math.max(this.slowT, dur);
   }
   applyBurn(dps, dur, src) {
+    if (this.def.burnImmune) return;
     if (dps >= this.burnDps || this.burnT <= 0) { this.burnDps = dps; this.burnSrc = src; }
     this.burnT = Math.max(this.burnT, dur);
   }
@@ -345,6 +357,24 @@ class Enemy {
 
   die(src) {
     if (!this.alive) return;
+    const d = this.def, g = this.game;
+    if (d.rebirth && !this.reborn) {
+      // 불사조: 처음 쓰러지면 알이 됨 — 제한 시간 안에 깨면 진짜 처치
+      this.reborn = true;
+      this.egg = d.rebirth.egg;
+      this.hp = this.maxHp * d.rebirth.eggHp;
+      this.burnT = 0; this.burnDps = 0;
+      g.fxRing(this.x, this.y - 20, 8, 50, 0.6, '#ffb347', 3);
+      g.emit('toast', { text: `${d.name}이(가) 알이 되었습니다 — ${d.rebirth.egg}초 안에 깨뜨리세요!`, kind: 'warn' });
+      return;
+    }
+    if (d.deathBlast) {
+      const r2 = (d.deathBlast.radius * TILE) ** 2;
+      for (const u of g.units.concat(g.hero && g.hero.alive ? [g.hero] : [])) {
+        if (u.alive && dist2(u.x, u.y, this.x, this.y) <= r2) u.takeDamage(d.deathBlast.dmg * this.atkMul, this);
+      }
+      g.fxExplosion(this.x, this.y, d.deathBlast.radius * TILE * 0.8, '#ff8a4c', false);
+    }
     this.alive = false;
     const bs = this.blockers.slice();
     this.blockers.length = 0;

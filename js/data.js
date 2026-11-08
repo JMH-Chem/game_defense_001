@@ -198,17 +198,23 @@ const ENEMIES = {
     burrow: { every: 4, dur: 1.8, speedMul: 1.8 }, trait: '주기적으로 땅속으로 파고들어 1.8초 동안 공격받지 않고 빠르게 이동합니다.' },
   hexer: { name: '저주술사', hp: 110, speed: 0.8, mres: 0.4, gold: 14, lives: 1, atk: 6, atkCd: 1.2, size: 12, cost: 3.0, interval: 1.8, weight: 1.0,
     hex: { cd: 6, range: 3, dur: 3 }, trait: '6초마다 가장 가까운 타워 하나를 3초 동안 마비시킵니다. 마법 저항 40%.' },
+  fireling: { name: '화염 정령', hp: 70, speed: 1.15, mres: 0.3, gold: 7, lives: 1, atk: 5, atkCd: 1.0, size: 11, cost: 1.8, interval: 0.8, weight: 1.6,
+    burnImmune: true, deathBlast: { radius: 1.2, dmg: 30 }, trait: '화상에 면역이며, 쓰러질 때 폭발해 주변 병사와 영웅에게 피해를 줍니다.' },
+  gargoyle: { name: '석상 가고일', hp: 120, speed: 0.9, armor: 0.5, flying: true, gold: 11, lives: 2, size: 14, cost: 3.0, interval: 1.4, weight: 1.3,
+    trait: '돌로 된 비행 유닛. 방어력 50%로 물리 공격에 강합니다.' },
   ogre: { name: '오우거 족장', hp: 2400, speed: 0.48, armor: 0.3, gold: 150, lives: 10, atk: 45, atkCd: 1.6, size: 26, boss: true, cost: 30,
     stomp: { cd: 5, radius: 1.7, dmg: 60, stun: 1.5 }, trait: '보스. 막아선 병사들을 주기적으로 짓밟아 기절시킵니다.' },
   drake: { name: '그림자 비룡', hp: 3400, speed: 0.45, mres: 0.35, flying: true, gold: 200, lives: 10, size: 28, boss: true, cost: 40,
     brood: { type: 'bat', count: 3, step: 0.2 }, trait: '비행 보스. 체력이 20% 줄어들 때마다 박쥐 떼를 풀어놓습니다.' },
   hydra: { name: '늪의 히드라', hp: 4600, speed: 0.42, armor: 0.25, mres: 0.25, gold: 240, lives: 15, atk: 40, atkCd: 1.2, size: 28, boss: true, cost: 45,
     regen: 0.012, cleave: 3, trait: '보스. 초당 체력 1.2%를 재생하고(불타는 동안 멈춤), 막아선 병사를 최대 3명까지 동시에 공격합니다.' },
+  phoenix: { name: '불사조', hp: 3800, speed: 0.48, mres: 0.3, flying: true, burnImmune: true, gold: 260, lives: 15, size: 26, boss: true, cost: 45,
+    rebirth: { egg: 4, eggHp: 0.3, hp: 0.5 }, trait: '비행 보스. 쓰러지면 알이 되고, 4초 안에 알을 깨지 못하면 체력 50%로 되살아납니다. 화상 면역.' },
   lord: { name: '어둠의 군주', hp: 12000, speed: 0.4, armor: 0.35, mres: 0.35, gold: 400, lives: 99, atk: 80, atkCd: 1.5, size: 30, boss: true, cost: 60,
     summon: { type: 'imp', count: 3, cd: 8 }, ward: { at: 0.5, pct: 0.3 },
     trait: '최종 보스. 졸개를 소환하고 체력이 절반이 되면 거대한 보호막을 펼칩니다. 등불에 닿으면 즉시 패배.' },
 };
-const ENEMY_CODEX_ORDER = ['imp', 'runner', 'bat', 'brute', 'shaman', 'slime', 'wraith', 'knight', 'troll', 'burrower', 'hexer', 'ogre', 'drake', 'hydra', 'lord'];
+const ENEMY_CODEX_ORDER = ['imp', 'runner', 'bat', 'brute', 'shaman', 'slime', 'wraith', 'knight', 'troll', 'burrower', 'hexer', 'fireling', 'gargoyle', 'ogre', 'drake', 'hydra', 'phoenix', 'lord'];
 
 // ── 영웅 ─────────────────────────────────────────────────────
 const HEROES = {
@@ -332,6 +338,8 @@ const THEMES = {
     decos: ['pillar', 'rubble', 'deadtree', 'pillar', 'brazier'], ambient: 'ember', dark: 0.48, portal: '#ff5d8f', tint: 'rgba(90,40,80,0.10)' },
   swamp: { ground: '#121c17', ground2: '#18261f', speck: '#28392f', grass: '#3f5c3b', path: '#3b3828', pathEdge: '#1b1a12', pathSpeck: '#5c5640',
     decos: ['pool', 'pool', 'reed', 'reed', 'stump', 'mushroom'], ambient: 'wisp', dark: 0.5, portal: '#7dff9a', tint: 'rgba(40,80,50,0.10)' },
+  volcano: { ground: '#1a1313', ground2: '#221817', speck: '#3a2924', grass: '#5a3a2a', path: '#3a2f2a', pathEdge: '#120d0c', pathSpeck: '#5a4a40',
+    decos: ['lava', 'lava', 'basalt', 'basalt', 'rubble'], ambient: 'ash', dark: 0.42, portal: '#ff7a3c', tint: 'rgba(90,40,20,0.10)' },
 };
 
 const STAGES = [
@@ -372,6 +380,14 @@ const STAGES = [
     ],
     unlocks: { imp: 1, runner: 1, slime: 2, troll: 3, bat: 4, burrower: 5, hexer: 7, brute: 8, shaman: 10, wraith: 12, knight: 13 },
     bosses: { 9: 'ogre', 18: 'hydra' },
+  },
+  {
+    id: 5, name: '잿불 화산', en: 'CINDER PEAK', theme: 'volcano',
+    desc: '등불을 한가운데 두고 길이 소용돌이처럼 감기는 화산. 화상에 면역인 정령과 돌 가고일, 되살아나는 불사조를 조심하세요.',
+    waves: 20, startGold: 480, hpMul: 1.2, budgetMul: 1.05, lateMul: 1.15, seed: 71,
+    paths: [[[-1, 2], [17, 2], [17, 9], [2, 9], [2, 5], [13, 5]]],
+    unlocks: { imp: 1, fireling: 1, runner: 2, brute: 3, hexer: 5, bat: 6, burrower: 7, troll: 8, gargoyle: 9, knight: 11, shaman: 12, wraith: 13 },
+    bosses: { 10: 'drake', 20: 'phoenix' },
   },
 ];
 

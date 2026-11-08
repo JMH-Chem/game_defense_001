@@ -657,6 +657,69 @@ function drawEnemyBody(ctx, type, s, t, e) {
       }
       break;
     }
+    case 'fireling': {
+      Glow.draw(ctx, 0, -s * 0.3, s * 2.2, '#ff8a4c', 0.55);
+      const f = Math.sin(t * 14 + e.id) * 0.12;
+      ctx.fillStyle = radGrad(ctx, 0, 0, 1, s * 1.3, ['#fff1c9', '#ffb347', '#ff5a2a']);
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.85, s * 0.6);
+      ctx.quadraticCurveTo(-s * 1.0, -s * 0.4, -s * 0.2 + f * s, -s * 1.5);
+      ctx.quadraticCurveTo(s * 0.1, -s * 0.8, s * 0.35, -s * 1.15);
+      ctx.quadraticCurveTo(s * 1.0, -s * 0.3, s * 0.85, s * 0.6);
+      ctx.quadraticCurveTo(0, s * 1.0, -s * 0.85, s * 0.6); ctx.fill();
+      ctx.fillStyle = '#5a1a08';
+      ellipse(ctx, s * 0.1, -s * 0.1, s * 0.13, s * 0.2); ctx.fill();
+      ellipse(ctx, s * 0.5, -s * 0.1, s * 0.12, s * 0.18); ctx.fill();
+      break;
+    }
+    case 'gargoyle': {
+      const f = Math.sin(t * 9 + e.id);
+      ctx.fillStyle = '#4a4e5a';
+      for (const side of [-1, 1]) {
+        poly(ctx, [side * s * 0.3, -s * 0.2, side * s * 1.9, -s * 0.9 - f * s * 0.6, side * s * 1.6, s * 0.1, side * s * 1.0, -s * 0.05, side * s * 0.7, s * 0.35]);
+        ctx.fill();
+      }
+      ctx.fillStyle = linGrad(ctx, 0, -s, 0, s, ['#8a8f9c', '#5c6070']);
+      ellipse(ctx, 0, 0, s * 0.75, s * 0.68); ctx.fill();
+      ctx.fillStyle = '#3a3d48';
+      poly(ctx, [-s * 0.45, -s * 0.5, -s * 0.6, -s * 1.15, -s * 0.15, -s * 0.6]); ctx.fill();
+      poly(ctx, [s * 0.45, -s * 0.5, s * 0.6, -s * 1.15, s * 0.15, -s * 0.6]); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-s * 0.3, s * 0.1); ctx.lineTo(s * 0.05, s * 0.4); ctx.stroke();
+      eyes(ctx, [-s * 0.25, -s * 0.15, s * 0.25, -s * 0.15], '#ffd166', s * 0.13);
+      break;
+    }
+    case 'phoenix': {
+      if (e.egg > 0) {
+        Glow.draw(ctx, 0, 0, s * 2.2, '#ffb347', 0.6 + Math.sin(t * 12) * 0.2);
+        ctx.fillStyle = radGrad(ctx, -s * 0.2, -s * 0.3, 2, s, ['#fff1c9', '#ffb347', '#c4501f']);
+        ellipse(ctx, 0, 0, s * 0.6, s * 0.8); ctx.fill();
+        ctx.strokeStyle = '#5a1a08'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-s * 0.4, -s * 0.1); ctx.lineTo(-s * 0.1, s * 0.1); ctx.lineTo(s * 0.15, -s * 0.15); ctx.lineTo(s * 0.4, s * 0.05); ctx.stroke();
+        break;
+      }
+      const f = Math.sin(t * 6 + e.id);
+      Glow.draw(ctx, 0, 0, s * 2.6, '#ff8a4c', 0.5);
+      for (let i = 0; i < 4; i++) {
+        ctx.strokeStyle = ['#ff5a2a', '#ff8a4c', '#ffb347', '#ffe08a'][i]; ctx.lineWidth = 3 - i * 0.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-s * 0.6, s * 0.1);
+        ctx.quadraticCurveTo(-s * 1.4, s * (0.2 + i * 0.15) + Math.sin(t * 4 + i) * 3, -s * (1.9 + i * 0.15), s * (0.1 + i * 0.25));
+        ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+      for (const side of [-1, 1]) {
+        ctx.fillStyle = linGrad(ctx, 0, 0, 0, side * s * 2, ['#ffe08a', '#ff8a4c', '#c4301f']);
+        poly(ctx, [-s * 0.2, side * s * 0.05, -s * 0.9, side * s * (1.2 + f * 0.5), -s * 0.1, side * s * (2.0 + f * 0.6), s * 0.6, side * s * (1.3 + f * 0.3), s * 0.4, side * s * 0.15]);
+        ctx.fill();
+      }
+      ctx.fillStyle = radGrad(ctx, 0, 0, 1, s, ['#fff1c9', '#ffb347', '#ff5a2a']);
+      ellipse(ctx, 0, 0, s * 0.75, s * 0.38); ctx.fill();
+      ctx.fillStyle = '#ffb347'; circle(ctx, s * 0.85, -s * 0.1, s * 0.26); ctx.fill();
+      ctx.fillStyle = '#ffe08a'; poly(ctx, [s * 1.05, -s * 0.12, s * 1.35, -s * 0.02, s * 1.05, s * 0.05]); ctx.fill();
+      ctx.fillStyle = '#ff5a2a'; poly(ctx, [s * 0.7, -s * 0.3, s * 0.55, -s * 0.75, s * 0.85, -s * 0.35]); ctx.fill();
+      eyes(ctx, [s * 0.92, -s * 0.15], '#5a1a08', s * 0.06);
+      break;
+    }
     case 'lord': {
       ctx.save(); ctx.rotate(t * 0.8);
       ctx.strokeStyle = 'rgba(200,120,255,0.45)'; ctx.lineWidth = 1.5;
@@ -1045,6 +1108,26 @@ function drawDeco(ctx, d, x, y) {
       ctx.stroke(); ctx.lineCap = 'butt';
       break;
     }
+    case 'lava': {
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ellipse(ctx, x + 1, y + 3, 20 * k, 12 * k); ctx.fill();
+      ctx.fillStyle = '#2a1410'; ellipse(ctx, x, y, 19 * k, 11.5 * k); ctx.fill();
+      ctx.fillStyle = radGrad(ctx, x - 2, y - 1, 1, 16 * k, ['#ffe08a', '#ff8a3c', '#c4301f']);
+      ellipse(ctx, x, y, 15 * k, 8.5 * k); ctx.fill();
+      ctx.fillStyle = 'rgba(60,20,10,0.6)';
+      ellipse(ctx, x - 5 * k, y + 1, 4, 2); ctx.fill(); ellipse(ctx, x + 6 * k, y - 2, 3, 1.6); ctx.fill();
+      break;
+    }
+    case 'basalt': {
+      ellipse(ctx, x + 2, y + 11, 15, 5); ctx.fill();
+      for (const [dx, h] of [[-8, 18 + s * 8], [0, 26 + s * 10], [8, 14 + s * 8]]) {
+        ctx.fillStyle = linGrad(ctx, x + dx - 4, 0, x + dx + 4, 0, ['#3a3238', '#2a2428', '#1d181c']);
+        ctx.fillRect(x + dx - 4, y + 10 - h, 8, h);
+        ctx.fillStyle = '#4a4046'; poly(ctx, [x + dx - 4, y + 10 - h, x + dx, y + 8 - h, x + dx + 4, y + 10 - h, x + dx, y + 12 - h]); ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255,120,50,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x - 3, y + 8); ctx.lineTo(x + 1, y - 4); ctx.stroke();
+      break;
+    }
     case 'pool': {
       ctx.fillStyle = 'rgba(0,0,0,0.25)'; ellipse(ctx, x + 1, y + 3, 21 * k, 13 * k); ctx.fill();
       ctx.fillStyle = radGrad(ctx, x - 4, y - 2, 2, 20 * k, ['#2f5f5a', '#1d3d3a', '#132826']);
@@ -1250,6 +1333,20 @@ const Renderer = {
         ctx.strokeStyle = rgba(th.grass, 0.2 + rng() * 0.3);
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + rng() * 3 - 1.5, y - 3 - rng() * 5); ctx.stroke();
       }
+    } else if (th.ambient === 'ash') {
+      for (let i = 0; i < 55; i++) {
+        let x = rng() * WORLD_W, y = rng() * WORLD_H;
+        if (onPath(x, y)) continue;
+        ctx.strokeStyle = `rgba(255,110,50,${0.08 + rng() * 0.14})`; ctx.lineWidth = 1 + rng();
+        ctx.beginPath(); ctx.moveTo(x, y);
+        for (let j = 0; j < 5; j++) { x += rng() * 18 - 9; y += rng() * 18 - 9; ctx.lineTo(x, y); }
+        ctx.stroke();
+      }
+      for (let i = 0; i < 500; i++) {
+        const x = rng() * WORLD_W, y = rng() * WORLD_H;
+        ctx.fillStyle = `rgba(10,6,6,${0.2 + rng() * 0.3})`;
+        circle(ctx, x, y, 0.6 + rng() * 1.4); ctx.fill();
+      }
     } else if (th.ambient === 'snow') {
       for (let i = 0; i < 60; i++) {
         const x = rng() * WORLD_W, y = rng() * WORLD_H, r = 14 + rng() * 40;
@@ -1356,7 +1453,7 @@ const Renderer = {
 
   initAmbient(kind) {
     this.ambient = [];
-    const n = kind === 'snow' ? 90 : kind === 'ember' ? 45 : kind === 'wisp' ? 22 : 36;
+    const n = kind === 'snow' ? 90 : kind === 'ember' ? 45 : kind === 'wisp' ? 22 : kind === 'ash' ? 70 : 36;
     for (let i = 0; i < n; i++) this.ambient.push({ x: rand(0, WORLD_W), y: rand(0, WORLD_H), p: rand(0, TAU), s: rand(0.6, 1.4), kind });
   },
 
@@ -1372,6 +1469,15 @@ const Renderer = {
         a.x += Math.sin(a.p * 0.3 + a.s * 7) * 8 * dt;
         a.y += Math.cos(a.p * 0.25 + a.s * 2) * 6 * dt - 2 * dt;
         Glow.draw(ctx, a.x, a.y, 16 * a.s, a.s > 1 ? '#7dffb0' : '#7fd8ff', (0.3 + Math.sin(a.p * 0.9 + a.s * 5) * 0.2));
+      } else if (a.kind === 'ash') {
+        if (a.s > 1.15) {
+          a.y -= 20 * a.s * dt; a.x += Math.sin(a.p * 2 + a.s) * 10 * dt;
+          Glow.draw(ctx, a.x, a.y, 6 * a.s, '#ff8a4c', 0.5 + Math.sin(a.p * 6) * 0.25);
+        } else {
+          a.y += 14 * a.s * dt; a.x += (6 + Math.sin(a.p + a.s * 4) * 8) * dt;
+          ctx.fillStyle = `rgba(150,140,140,${0.25 + a.s * 0.2})`;
+          circle(ctx, a.x, a.y, a.s * 1.3); ctx.fill();
+        }
       } else if (a.kind === 'snow') {
         a.y += 26 * a.s * dt;
         a.x += (10 + Math.sin(a.p + a.s * 4) * 14) * dt;
@@ -1550,7 +1656,7 @@ const Renderer = {
     if (g.hero.alive) items.push({ y: g.hero.y, k: 3, o: g.hero });
     items.push({ y: g.lantern.y, k: 4, o: g.lantern });
     for (const d of g.decos) {
-      if (d.kind === 'brazier' || d.kind === 'mushroom' || d.kind === 'crystal' || d.kind === 'pool') items.push({ y: d.r * TILE + TILE / 2, k: 5, o: d });
+      if (d.kind === 'brazier' || d.kind === 'mushroom' || d.kind === 'crystal' || d.kind === 'pool' || d.kind === 'lava') items.push({ y: d.r * TILE + TILE / 2, k: 5, o: d });
     }
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
@@ -1580,6 +1686,8 @@ const Renderer = {
             Glow.draw(ctx, x, y - 4, 40, '#ff8a4c', 0.45 + Math.sin(t * 10 + x) * 0.08);
             ctx.globalCompositeOperation = 'source-over';
             flameShape(ctx, x, y - 1, 5, 12, t + x, '#ff7a3c', '#ffe0a0');
+          } else if (o.kind === 'lava') {
+            Glow.draw(ctx, x, y, 38, '#ff7a3c', 0.4 + Math.sin(t * 2 + x) * 0.1);
           } else if (o.kind === 'pool') {
             Glow.draw(ctx, x, y, 22, '#6fe0c0', 0.12 + Math.sin(t * 1.3 + x) * 0.05);
           } else if (o.kind === 'mushroom') {

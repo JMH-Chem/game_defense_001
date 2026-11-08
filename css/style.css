@@ -156,8 +156,9 @@ kbd {
 .toast.ach { border-color: rgba(255, 211, 107, 0.7); color: var(--gold); }
 @media (max-width: 640px) { .up-grid { grid-template-columns: minmax(0, 1fr); } .stages-actions .btn { min-height: 36px; padding: 0 12px; } }
 .stages-head h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 30px; }
-.stage-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 1200px; margin: 0 auto; }
-@media (max-width: 1180px) { .stage-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 880px; } }
+.stage-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; max-width: 1360px; margin: 0 auto; }
+.stage-list .stage-meta p:not(.en) { font-size: 12px; }
+@media (max-width: 1300px) { .stage-list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1120px; } }
 .stage-card {
   position: relative; text-align: left;
   border-radius: 14px; border: 1px solid var(--line);
