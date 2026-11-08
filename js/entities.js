@@ -598,6 +598,10 @@ class Hero {
     }
 
     this.hp = Math.min(this.maxHp, this.hp + this.def.regen * lvMul * (this.blocking ? 0.35 : 1) * dt);
+    if (this.def.aura) {
+      const r2 = (this.def.aura.radius * TILE) ** 2;
+      for (const u of g.units) if (u.alive && dist2(u.x, u.y, this.x, this.y) <= r2) u.hp = Math.min(u.maxHp, u.hp + this.def.aura.heal * lvMul * dt);
+    }
     if (this.target && !this.target.alive) this.release();
     if (this.target && !this.blocking &&
         dist2(this.target.x, this.target.y, this.hx, this.hy) > (this.engage * 1.8) ** 2) this.release();
@@ -620,7 +624,8 @@ class Hero {
           this.swing = 0.2;
           const orb = this.def.dmgType === 'magic';
           g.projectiles.push(new Projectile(g, {
-            x: this.x + this.face * 6, y: this.y - 14, target: e, kind: orb ? 'orb' : 'heroArrow',
+            slow: this.def.rootSlow || 0, slowDur: 1.2,
+            x: this.x + this.face * 6, y: this.y - 14, target: e, kind: this.def.rootSlow ? 'thorn' : orb ? 'orb' : 'heroArrow',
             speed: orb ? 360 : 640, dmg: this.dmg, dmgType: this.def.dmgType, splash: this.def.splash || 0,
             src: this, air: true, arc: orb ? 14 : 8,
           }));

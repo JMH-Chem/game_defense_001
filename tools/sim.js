@@ -148,7 +148,7 @@ function main() {
   const pickArg = (i, all) => (args[i] != null && args[i] !== 'all' ? [args[i]] : all);
   const stages = pickArg(0, STAGES.map((_, i) => String(i))).map(Number);
   const diffs = pickArg(1, ['normal', 'hard']);
-  const heroes = pickArg(2, ['aren', 'lyra', 'serin']);
+  const heroes = pickArg(2, ['aren', 'lyra', 'serin', 'orin']);
   const profiles = pickArg(3, ['balanced', 'lazy']);
 
   const t0 = Date.now();

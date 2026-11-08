@@ -12,7 +12,7 @@ const Save = {
   data: {
     unlocked: 1, stars: {}, hardStars: {}, endlessBest: {},
     settings: { sfx: true, music: true, dmgNumbers: true, shake: true, lighting: true },
-    tutorialDone: false, hero: 'aren', diff: 'normal', stage: 0, seen: {}, resCollapsed: true,
+    tutorialDone: false, hero: 'aren', diff: 'normal', stage: 0, seen: {}, resCollapsed: true, upgrades: {}, achievements: {}, life: {},
   },
   load() {
     try {
@@ -30,6 +30,31 @@ const Save = {
     location.reload();
   },
 };
+
+// ── 업적 ──
+const ACHIEVEMENTS = [
+  { id: 'first', icon: '★', name: '첫 등불', desc: '속삭이는 숲을 클리어', test: (c) => (c.S.stars[0] || 0) > 0 },
+  { id: 'allclear', icon: '✦', name: '원정 완주', desc: '모든 원정지를 클리어', test: (c) => STAGES.every((_, i) => (c.S.stars[i] || 0) > 0) },
+  { id: 'threestar', icon: '✶', name: '완벽한 밤', desc: '한 원정지에서 별 3개', test: (c) => Object.values(c.S.stars).some((v) => v >= 3) },
+  { id: 'stars12', icon: '✧', name: '별 수집가', desc: '별 12개 모으기', test: (c) => c.T.earned >= 12 },
+  { id: 'allstars', icon: '❂', name: '은하수', desc: '보통 난이도 별을 모두 모으기', test: (c) => STAGES.every((_, i) => (c.S.stars[i] || 0) >= 3) },
+  { id: 'hardwin', icon: '♛', name: '영웅의 길', desc: '영웅 난이도로 원정지 클리어', test: (c) => Object.values(c.S.hardStars).some((v) => v > 0) },
+  { id: 'hardall', icon: '♜', name: '전설이 되다', desc: '모든 원정지를 영웅 난이도로 클리어', test: (c) => STAGES.every((_, i) => (c.S.hardStars[i] || 0) > 0) },
+  { id: 'flawless', icon: '◇', name: '무결점', desc: '적을 하나도 놓치지 않고 클리어', test: (c) => c.end && c.end.won && !c.g.endless && c.g.stats.leaked === 0 },
+  { id: 'kills1k', icon: '⚑', name: '백전노장', desc: '누적 1,000마리 처치', test: (c) => c.kills >= 1000 },
+  { id: 'kills10k', icon: '☾', name: '어둠 사냥꾼', desc: '누적 10,000마리 처치', test: (c) => c.kills >= 10000 },
+  { id: 'boss10', icon: '✸', name: '보스 사냥꾼', desc: '누적 보스 10마리 처치', test: (c) => c.bosses >= 10 },
+  { id: 'evolve6', icon: '❖', name: '진화의 끝', desc: '한 전투에서 최종 진화 타워 6개', test: (c) => c.g && c.g.towers.filter((t) => t.branch != null).length >= 6 },
+  { id: 'resonance', icon: '◆', name: '완전한 공명', desc: '공명 3단계 달성', test: (c) => c.g && Object.values(c.g.res.tier).some((v) => v >= 3) },
+  { id: 'harmony', icon: '✹', name: '조화', desc: '6종 타워를 모두 보유', test: (c) => c.g && c.g.res.harmonyOn },
+  { id: 'rich', icon: '●', name: '금고지기', desc: '골드 2,000 보유', test: (c) => c.g && c.g.gold >= 2000 },
+  { id: 'hero10', icon: '♔', name: '전설의 영웅', desc: '영웅 Lv.10 달성', test: (c) => c.g && c.g.hero.level >= 10 },
+  { id: 'runes7', icon: '✺', name: '룬 수집가', desc: '한 전투에서 룬 7개 획득', test: (c) => c.g && c.g.runes.length >= 7 },
+  { id: 'endless30', icon: '∞', name: '끝없는 밤', desc: '무한 모드 30웨이브 도달', test: (c) => c.g && c.g.endless && c.g.wave >= 30 },
+  { id: 'early50', icon: '»', name: '성급한 지휘관', desc: '조기 호출 누적 50회', test: (c) => c.early >= 50 },
+  { id: 'upall', icon: '✪', name: '대가', desc: '별 강화를 모두 습득', test: (c) => UPGRADES.every((u) => (c.S.upgrades[u.id] || 0) >= u.levels.length) },
+  { id: 'heroes', icon: '☘', name: '모두의 영웅', desc: '네 영웅으로 각각 한 번씩 승리', test: (c) => HERO_ORDER.every((h) => (c.S.life.heroWins || {})[h]) },
+];
 
 const UI = {
   screen: 'title',
@@ -87,6 +112,10 @@ const UI = {
   // ═══════════════════ 원정지 선택 ═══════════════════
   showStages() {
     this.show('stages');
+    const ub = $('#btn-upgrades');
+    ub.onclick = () => { this.click(); this.openUpgrades(); };
+    $('#btn-achievements').onclick = () => { this.click(); this.openAchievements(); };
+    this.refreshStarCount();
     const list = $('#stage-list');
     list.innerHTML = '';
     STAGES.forEach((st, i) => {
@@ -177,7 +206,7 @@ const UI = {
     Save.data.diff = this.pick.diff;
     Save.data.stage = this.pick.stage;
     Save.save();
-    App.start({ stage: this.pick.stage, hero: this.pick.hero, difficulty: this.pick.diff, endless: this.pick.endless });
+    App.start({ stage: this.pick.stage, hero: this.pick.hero, difficulty: this.pick.diff, endless: this.pick.endless, meta: { ...Save.data.upgrades } });
   },
 
   // ═══════════════════ 게임 화면 바인딩 ═══════════════════
@@ -281,6 +310,10 @@ const UI = {
       ctx.strokeStyle = '#e8ffd0'; ctx.lineWidth = 1.6;
       for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(10 + i * 5, 6); ctx.lineTo(6 + i * 5, 26); ctx.stroke(); }
       ctx.fillStyle = '#8ef08a'; ellipse(ctx, 16, 28, 11, 3); ctx.fill();
+    } else if (id === 'grove') {
+      ctx.fillStyle = '#5a3d25'; ctx.fillRect(16, 18, 4, 12);
+      ctx.fillStyle = '#5a8a40'; circle(ctx, 18, 14, 8); ctx.fill();
+      ctx.fillStyle = '#9be37b'; circle(ctx, 14, 12, 4); ctx.fill();
     } else {
       ctx.strokeStyle = '#ffd6ff'; ctx.lineWidth = 1.8;
       for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(18, 18, 4 + i * 4, i, i + 4); ctx.stroke(); }
@@ -643,6 +676,8 @@ const UI = {
     this.updateInfo(g);
     if (App.view.moveMarker) { App.view.moveMarker.t -= dt * 1.8; if (App.view.moveMarker.t <= 0) App.view.moveMarker = null; }
     this.coachTick(g);
+    this.achT = (this.achT || 0) + dt;
+    if (this.achT > 1) { this.achT = 0; this.checkAchievements(g); }
   },
 
   setCd(btn, left, max, blocked) {
@@ -1031,6 +1066,93 @@ const UI = {
     App.modalPause = false;
   },
 
+  checkAchievements(g, end) {
+    const S = Save.data;
+    S.achievements = S.achievements || {};
+    S.life = S.life || {};
+    const live = g && !end;
+    const c = {
+      S, g, end, T: this.starTotals(),
+      kills: (S.life.kills || 0) + (live ? g.stats.kills : 0),
+      bosses: (S.life.bosses || 0) + (live ? g.stats.bossKills : 0),
+      early: (S.life.early || 0) + (live ? g.stats.earlyCalls : 0),
+    };
+    let changed = false;
+    for (const a of ACHIEVEMENTS) {
+      if (S.achievements[a.id]) continue;
+      let ok = false;
+      try { ok = !!a.test(c); } catch (e) { ok = false; }
+      if (ok) {
+        S.achievements[a.id] = Date.now();
+        changed = true;
+        this.toast(`업적 달성 — ${a.name}`, 'ach');
+        Sfx.play('rune');
+      }
+    }
+    if (changed) Save.save();
+  },
+
+  openAchievements() {
+    const S = Save.data;
+    const done = ACHIEVEMENTS.filter((a) => (S.achievements || {})[a.id]).length;
+    const life = S.life || {};
+    const m = this.openModal(`
+      <div class="modal-head"><p class="eyebrow">ACHIEVEMENTS</p><h2>업적 ${done}/${ACHIEVEMENTS.length}</h2>
+        <p class="modal-sub">누적 처치 ${fmt(life.kills || 0)} · 보스 ${fmt(life.bosses || 0)} · 조기 호출 ${fmt(life.early || 0)} · 승리 ${fmt(life.wins || 0)}</p></div>
+      <div class="ach-grid">${ACHIEVEMENTS.map((a) => `<div class="ach ${(S.achievements || {})[a.id] ? 'done' : ''}"><i>${a.icon}</i><b>${esc(a.name)}</b><small>${esc(a.desc)}</small></div>`).join('')}</div>
+      <div class="modal-actions"><button class="btn btn-primary" data-a="close">닫기</button></div>`, { cls: 'modal-wide', esc: () => this.closeModal(), pause: false });
+    $('[data-a=close]', m).onclick = () => { this.click(); this.closeModal(); };
+  },
+
+  starTotals() {
+    const sum = (o) => Object.values(o || {}).reduce((a, b) => a + (b || 0), 0);
+    const earned = sum(Save.data.stars) + sum(Save.data.hardStars);
+    let spent = 0;
+    for (const up of UPGRADES) {
+      const lv = Save.data.upgrades[up.id] || 0;
+      for (let i = 0; i < lv; i++) spent += up.levels[i].cost;
+    }
+    return { earned, spent, left: earned - spent };
+  },
+
+  refreshStarCount() {
+    const el = $('#star-count');
+    if (el) el.textContent = String(this.starTotals().left);
+  },
+
+  openUpgrades() {
+    const render = () => {
+      const st = this.starTotals();
+      const m = this.openModal(`
+        <div class="modal-head"><p class="eyebrow">STAR UPGRADES</p><h2>별 강화</h2>
+          <p class="modal-sub">원정지에서 얻은 별로 영구 강화를 익힙니다. 영웅 난이도 별도 따로 모입니다. 남은 별 <b style="color:var(--gold)">★ ${st.left}</b> / 모은 별 ${st.earned}</p></div>
+        <div class="up-grid">${UPGRADES.map((up) => {
+          const lv = Save.data.upgrades[up.id] || 0;
+          return `<div class="up-track" style="--c:${up.color}"><div class="up-track-head"><canvas data-sigil="${up.sigil}"></canvas><b>${esc(up.name)}</b><span>${lv}/3</span></div>
+            ${up.levels.map((L, i) => {
+              const owned = i < lv, next = i === lv, can = next && st.left >= L.cost;
+              return `<button class="up-node ${owned ? 'owned' : ''} ${next ? 'next' : ''}" data-up="${up.id}" ${can ? '' : 'disabled'}><span>${esc(L.desc)}</span><span class="up-cost">${owned ? '습득' : `★ ${L.cost}`}</span></button>`;
+            }).join('')}</div>`;
+        }).join('')}</div>
+        <div class="modal-actions"><button class="btn" data-a="reset">초기화 (별 전부 돌려받기)</button><button class="btn btn-primary" data-a="close">닫기</button></div>`,
+      { cls: 'modal-wide', esc: () => { this.closeModal(); this.refreshStarCount(); }, pause: false });
+      $$('canvas[data-sigil]', m).forEach((c) => Icons.sigil(c, c.dataset.sigil, '#ffffff', 32));
+      $$('.up-node', m).forEach((b) => {
+        b.onclick = () => {
+          const id = b.dataset.up;
+          Save.data.upgrades[id] = (Save.data.upgrades[id] || 0) + 1;
+          Save.save();
+          Sfx.play('upgrade');
+          this.checkAchievements();
+          render();
+        };
+      });
+      $('[data-a=reset]', m).onclick = () => { Save.data.upgrades = {}; Save.save(); this.click(); render(); };
+      $('[data-a=close]', m).onclick = () => { this.click(); this.closeModal(); this.refreshStarCount(); };
+    };
+    render();
+  },
+
   openPause() {
     if (!App.game || this.modalOpen()) return;
     const g = App.game;
@@ -1114,7 +1236,16 @@ const UI = {
       if (g.diffId === 'hard') Save.data.stars[idx] = Math.max(Save.data.stars[idx] || 0, 1);
       Save.data.unlocked = Math.max(Save.data.unlocked, Math.min(STAGES.length, idx + 2));
     }
+    const life = Save.data.life = Save.data.life || {};
+    life.kills = (life.kills || 0) + g.stats.kills;
+    life.bosses = (life.bosses || 0) + g.stats.bossKills;
+    life.early = (life.early || 0) + g.stats.earlyCalls;
+    if (r.won) {
+      life.wins = (life.wins || 0) + 1;
+      life.heroWins = Object.assign({}, life.heroWins, { [g.heroId]: true });
+    }
     Save.save();
+    this.checkAchievements(g, r);
     const mins = Math.floor(g.time / 60), secs = Math.floor(g.time % 60);
     const stats = `<div class="result-grid">
       <div><b>${fmt(g.stats.kills)}</b><span>처치</span></div>
@@ -1147,7 +1278,7 @@ const UI = {
       this.click();
       this.closeModal();
       if (a.dataset.a === 'retry') App.restart();
-      else if (a.dataset.a === 'next') { this.pick.stage = idx + 1; this.pick.endless = false; Save.data.stage = idx + 1; Save.save(); App.start({ stage: idx + 1, hero: g.heroId, difficulty: g.diffId, endless: false }); }
+      else if (a.dataset.a === 'next') { this.pick.stage = idx + 1; this.pick.endless = false; Save.data.stage = idx + 1; Save.save(); App.start({ stage: idx + 1, hero: g.heroId, difficulty: g.diffId, endless: false, meta: { ...Save.data.upgrades } }); }
       else App.quit();
     });
   },

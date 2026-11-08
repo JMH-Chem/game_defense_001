@@ -24,6 +24,7 @@ class Game {
     this.diffId = opts.difficulty || 'normal';
     this.diff = DIFFICULTY[this.diffId];
     this.endless = !!opts.endless;
+    this.opts = opts;
     this.headless = !!opts.headless;
     this.settings = opts.settings || { dmgNumbers: true };
     this.theme = THEMES[this.stage.theme];
@@ -67,7 +68,7 @@ class Game {
     this.runeChoices = null;
     this.rerolled = false;
     this.spells = { meteor: 0, reinforce: 0 };
-    this.stats = { kills: 0, goldEarned: 0, built: 0, leaked: 0, bossKills: 0, spent: 0 };
+    this.stats = { kills: 0, goldEarned: 0, built: 0, leaked: 0, bossKills: 0, spent: 0, earlyCalls: 0 };
     this.shakeT = 0;
     this.shakeAmp = 0;
     this.bossRef = null;
@@ -77,6 +78,14 @@ class Game {
     const home = p0.at(p0.length * 0.62);
     this.hero = new Hero(this, this.heroId, sp.x, sp.y, home.x, home.y);
     this.hero.x = home.x; this.hero.y = home.y;
+    // 별 강화(영구 성장) 적용
+    this.meta = this.opts.meta || {};
+    for (const up of UPGRADES) {
+      const lv = Math.min(this.meta[up.id] || 0, up.levels.length);
+      for (let i = 0; i < lv; i++) up.levels[i].apply(this);
+    }
+    this.hero.recalc();
+    this.hero.hp = this.hero.maxHp;
     this.waveInfo = this.buildWave(1);
   }
 
@@ -223,6 +232,7 @@ class Game {
     if (this.state === 'won' || this.state === 'lost' || this.paused) return false;
     if (this.spawning || this.wave >= this.totalWaves) return false;
     if (this.countdown != null) {
+      this.stats.earlyCalls++;
       const bonus = Math.round(this.countdown * 1.4 * this.mods.earlyMul);
       if (bonus > 0) {
         this.addGold(bonus, true);
@@ -600,6 +610,22 @@ class Game {
       }
       this.fxRing(x, y, r * 0.9, r, 1.6, '#8ef08a', 2);
       this.sfx('volley');
+    } else if (sk.id === 'grove') {
+      const np = this.nearestPathPoint(x, y);
+      if (np && np.d < TILE * 2) { x = np.x; y = np.y; }
+      const lv = 1 + 0.1 * (h.level - 1);
+      const s = new Soldier(this, {
+        x, y: y - 6, rx: x, ry: y, hp: 520 * lv * (1 + this.mods.soldierHp), dmg: 22 * lv * (1 + this.mods.soldierDmg),
+        cd: 1.2, armor: 0.35, ttl: sk.dur, engage: 1.6, style: 'treant', side: 1, speed: 1.2,
+      });
+      this.units.push(s);
+      const r = sk.radius * TILE;
+      for (const u of this.units.concat([h])) {
+        if (u.alive && dist2(u.x, u.y, x, y) <= r * r) u.hp = Math.min(u.maxHp, u.hp + u.maxHp * sk.heal);
+      }
+      this.fxRing(x, y, 6, r, 0.7, '#c9e27a', 4);
+      this.fxSpark(x, y, '#c9e27a', 18, 90, 0.7, 2.5);
+      this.sfx('summon2');
     } else if (sk.id === 'rift') {
       const r = sk.radius * TILE;
       this.explode(x, y, r, sk.dmg * dm, 'magic', h, { slow: sk.slow, slowDur: sk.dur, air: true, canCrit: false });

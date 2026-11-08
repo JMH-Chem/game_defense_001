@@ -226,6 +226,14 @@ const HEROES = {
     skill: { id: 'volley', name: '화살비', cd: 16, target: 'point', radius: 1.5, dmg: 32, hits: 8,
       desc: '지정한 지역에 화살비를 쏟아 8회 범위 피해를 줍니다.' },
   },
+  orin: {
+    name: '오린', title: '대지의 드루이드', color: '#c9e27a', role: '소환·지원',
+    hp: 320, dmg: 21, cd: 1.0, range: 3.0, dmgType: 'magic', armor: 0.15, speed: 1.6, regen: 7, engage: 0.9, air: true,
+    rootSlow: 0.3, aura: { radius: 2, heal: 8 },
+    desc: '덩굴 씨앗으로 적을 느리게 하고, 곁에 있는 병사들의 체력을 초당 8씩 회복시킵니다.',
+    skill: { id: 'grove', name: '숲의 수호자', cd: 22, target: 'point', radius: 2.0, heal: 0.4, dur: 18,
+      desc: '지정한 길에 18초간 나무 정령을 불러내 적을 막고, 주변 아군의 체력을 40% 회복시킵니다.' },
+  },
   serin: {
     name: '세린', title: '별의 마법사', color: '#e08bff', role: '마법 범위딜',
     hp: 230, dmg: 34, cd: 1.3, range: 3.1, dmgType: 'magic', splash: 0.7, armor: 0, speed: 1.6, regen: 6, engage: 0.9, air: true,
@@ -234,7 +242,41 @@ const HEROES = {
       desc: '지정한 지역의 적을 4초간 70% 둔화시키고 마법 피해를 줍니다.' },
   },
 };
-const HERO_ORDER = ['aren', 'lyra', 'serin'];
+const HERO_ORDER = ['aren', 'lyra', 'serin', 'orin'];
+
+// ── 별 강화 (영구 성장): 별을 써서 트랙별로 3단계까지 ──
+const UPGRADES = [
+  { id: 'archer', name: '궁술', color: '#f2c46d', sigil: 'archer', levels: [
+    { cost: 1, desc: '궁수탑 피해 +10%', apply: (g) => { g.mods.dmg.archer += 0.1; } },
+    { cost: 2, desc: '궁수탑 공격속도 +10%', apply: (g) => { g.mods.rate.archer += 0.1; } },
+    { cost: 3, desc: '모든 타워 사거리 +5%', apply: (g) => { g.mods.range += 0.05; } },
+  ] },
+  { id: 'cannon', name: '포술', color: '#ff8a4c', sigil: 'cannon', levels: [
+    { cost: 1, desc: '대포탑 피해 +10%', apply: (g) => { g.mods.dmg.cannon += 0.1; } },
+    { cost: 2, desc: '폭발 범위 +10%', apply: (g) => { g.mods.splash += 0.1; } },
+    { cost: 3, desc: '모든 물리 피해 +8%', apply: (g) => { g.mods.physDmg += 0.08; } },
+  ] },
+  { id: 'arcana', name: '비술', color: '#c48bff', sigil: 'arcane', levels: [
+    { cost: 1, desc: '둔화 +5%p', apply: (g) => { g.mods.slowAdd += 0.05; } },
+    { cost: 2, desc: '비전탑 연쇄 +1', apply: (g) => { g.mods.chainAdd += 1; } },
+    { cost: 3, desc: '모든 마법 피해 +8%', apply: (g) => { g.mods.magicDmg += 0.08; } },
+  ] },
+  { id: 'command', name: '군략', color: '#9be37b', sigil: 'barracks', levels: [
+    { cost: 1, desc: '병사·민병 체력 +15%', apply: (g) => { g.mods.soldierHp += 0.15; } },
+    { cost: 2, desc: '성소 버프 효과 +15%', apply: (g) => { g.mods.shrineMul += 0.15; } },
+    { cost: 3, desc: '병사·민병 피해 +20%', apply: (g) => { g.mods.soldierDmg += 0.2; } },
+  ] },
+  { id: 'hero', name: '영웅담', color: '#6fb7ff', sigil: 'crown', levels: [
+    { cost: 1, desc: '영웅 체력 +15%', apply: (g) => { g.mods.heroHp += 0.15; } },
+    { cost: 2, desc: '영웅 피해 +15%', apply: (g) => { g.mods.heroDmg += 0.15; } },
+    { cost: 3, desc: '영웅 부활 시간 -30%', apply: (g) => { g.mods.heroRespawn *= 0.7; } },
+  ] },
+  { id: 'supply', name: '병참', color: '#ffd36b', sigil: 'coin', levels: [
+    { cost: 1, desc: '시작 골드 +40', apply: (g) => { g.gold += 40; } },
+    { cost: 2, desc: '주문 재사용 대기 -12%', apply: (g) => { g.mods.spellCd *= 0.88; } },
+    { cost: 3, desc: '생명 +3', apply: (g) => { g.lives += 3; g.maxLives += 3; } },
+  ] },
+];
 
 // ── 주문 ─────────────────────────────────────────────────────
 const SPELLS = {
