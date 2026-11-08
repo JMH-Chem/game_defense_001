@@ -1135,7 +1135,7 @@ const UI = {
       if (ok) {
         S.achievements[a.id] = Date.now();
         changed = true;
-        this.toast(`업적 달성 — ${a.name}`, 'ach');
+        this.toast(`업적 달성 — ${a.name}`, 'achv');
         Sfx.play('rune');
       }
     }

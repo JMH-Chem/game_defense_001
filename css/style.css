@@ -166,12 +166,12 @@ kbd {
 .ach.done i { color: var(--gold); background: rgba(255, 211, 107, 0.14); }
 .ach b { font-size: 13px; }
 .ach small { font-size: 11px; color: var(--muted); }
-.toast.ach { border-color: rgba(255, 211, 107, 0.7); color: var(--gold); }
+.toast.achv { border-color: rgba(255, 211, 107, 0.7); color: var(--gold); }
 @media (max-width: 640px) { .up-grid { grid-template-columns: minmax(0, 1fr); } .stages-actions .btn { min-height: 36px; padding: 0 12px; } }
 .stages-head h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 30px; }
-.stage-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; max-width: 1360px; margin: 0 auto; }
+.stage-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 1180px; margin: 0 auto; }
 .stage-list .stage-meta p:not(.en) { font-size: 12px; }
-@media (max-width: 1300px) { .stage-list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1120px; } }
+@media (max-width: 1000px) { .stage-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .stage-card {
   position: relative; text-align: left;
   border-radius: 14px; border: 1px solid var(--line);
@@ -320,7 +320,7 @@ kbd {
 @keyframes banner { 0% { opacity: 0; transform: scale(1.25); } 12% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
 
 /* 토스트 & 코치 */
-.toasts { position: absolute; top: calc(var(--cy) + 46px); left: 50%; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; pointer-events: none; z-index: 4; width: max-content; max-width: 92%; }
+.toasts { position: absolute; top: calc(var(--cy) + 46px); left: 4%; right: 4%; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 4; }
 .toast { padding: 7px 14px; border-radius: 99px; background: var(--glass-strong); border: 1px solid var(--line-strong); font-size: 13px; animation: toast 2.8s forwards; text-align: center; }
 .toast.gold { border-color: rgba(255, 211, 107, 0.5); color: var(--gold); }
 .toast.warn { border-color: rgba(255, 107, 107, 0.55); color: #ffc0c0; }

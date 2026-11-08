@@ -210,11 +210,14 @@ const ENEMIES = {
     regen: 0.012, cleave: 3, trait: '보스. 초당 체력 1.2%를 재생하고(불타는 동안 멈춤), 막아선 병사를 최대 3명까지 동시에 공격합니다.' },
   phoenix: { name: '불사조', hp: 3800, speed: 0.48, mres: 0.3, flying: true, burnImmune: true, gold: 260, lives: 15, size: 26, boss: true, cost: 45,
     rebirth: { egg: 4, eggHp: 0.3, hp: 0.5 }, trait: '비행 보스. 쓰러지면 알이 되고, 4초 안에 알을 깨지 못하면 체력 50%로 되살아납니다. 화상 면역.' },
+  queen: { name: '밤의 여왕', hp: 15000, speed: 0.38, armor: 0.4, mres: 0.4, gold: 600, lives: 99, atk: 90, atkCd: 1.4, size: 30, boss: true, cost: 70,
+    summon: { type: 'wraith', count: 2, cd: 9 }, eclipse: { cd: 10, radius: 3, dur: 3 }, ward: { at: 0.5, pct: 0.2, blink: 3 },
+    trait: '최종 보스. 10초마다 주변 타워를 3초간 일식으로 잠재우고, 망령을 부르며, 체력이 절반이 되면 보호막과 함께 앞으로 순간이동합니다. 등불에 닿으면 즉시 패배.' },
   lord: { name: '어둠의 군주', hp: 12000, speed: 0.4, armor: 0.35, mres: 0.35, gold: 400, lives: 99, atk: 80, atkCd: 1.5, size: 30, boss: true, cost: 60,
     summon: { type: 'imp', count: 3, cd: 8 }, ward: { at: 0.5, pct: 0.3 },
     trait: '최종 보스. 졸개를 소환하고 체력이 절반이 되면 거대한 보호막을 펼칩니다. 등불에 닿으면 즉시 패배.' },
 };
-const ENEMY_CODEX_ORDER = ['imp', 'runner', 'bat', 'brute', 'shaman', 'slime', 'wraith', 'knight', 'troll', 'burrower', 'hexer', 'fireling', 'gargoyle', 'ogre', 'drake', 'hydra', 'phoenix', 'lord'];
+const ENEMY_CODEX_ORDER = ['imp', 'runner', 'bat', 'brute', 'shaman', 'slime', 'wraith', 'knight', 'troll', 'burrower', 'hexer', 'fireling', 'gargoyle', 'ogre', 'drake', 'hydra', 'phoenix', 'lord', 'queen'];
 
 // ── 영웅 ─────────────────────────────────────────────────────
 const HEROES = {
@@ -340,6 +343,8 @@ const THEMES = {
     decos: ['pool', 'pool', 'reed', 'reed', 'stump', 'mushroom'], ambient: 'wisp', dark: 0.5, portal: '#7dff9a', tint: 'rgba(40,80,50,0.10)' },
   volcano: { ground: '#1a1313', ground2: '#221817', speck: '#3a2924', grass: '#5a3a2a', path: '#3a2f2a', pathEdge: '#120d0c', pathSpeck: '#5a4a40',
     decos: ['lava', 'lava', 'basalt', 'basalt', 'rubble'], ambient: 'ash', dark: 0.42, portal: '#ff7a3c', tint: 'rgba(90,40,20,0.10)' },
+  citadel: { ground: '#13142a', ground2: '#191a36', speck: '#2a2b4c', grass: '#5a5c9a', path: '#383a5c', pathEdge: '#15162a', pathSpeck: '#6a6c9c',
+    decos: ['crystal', 'pillar', 'pillar', 'brazier', 'rubble'], ambient: 'stars', dark: 0.46, portal: '#a0a8ff', tint: 'rgba(60,60,140,0.10)' },
 };
 
 const STAGES = [
@@ -388,6 +393,18 @@ const STAGES = [
     paths: [[[-1, 2], [17, 2], [17, 9], [2, 9], [2, 5], [13, 5]]],
     unlocks: { imp: 1, fireling: 1, runner: 2, brute: 3, hexer: 5, bat: 6, burrower: 7, troll: 8, gargoyle: 9, knight: 11, shaman: 12, wraith: 13 },
     bosses: { 10: 'drake', 20: 'phoenix' },
+  },
+  {
+    id: 6, name: '별이 지는 성채', en: 'STARFALL CITADEL', theme: 'citadel',
+    desc: '좌우 두 길과 하늘의 포탈에서 동시에 몰려오는 최후의 결전. 밤의 여왕이 마지막 등불을 끄러 옵니다.',
+    waves: 25, startGold: 560, hpMul: 1.15, budgetMul: 1.0, lateMul: 1.5, seed: 89,
+    paths: [
+      [[-1, 1], [5, 1], [5, 4], [2, 4], [2, 8], [7, 8], [7, 6], [10, 6], [10, 9]],
+      [[20, 1], [15, 1], [15, 4], [18, 4], [18, 8], [13, 8], [13, 6], [10, 6], [10, 9]],
+    ],
+    airPortals: [[10, -1]],
+    unlocks: { imp: 1, runner: 1, fireling: 2, slime: 3, brute: 4, troll: 6, bat: 7, burrower: 8, hexer: 10, shaman: 11, gargoyle: 12, wraith: 13, knight: 15 },
+    bosses: { 8: 'ogre', 14: 'hydra', 20: 'lord', 25: 'queen' },
   },
 ];
 

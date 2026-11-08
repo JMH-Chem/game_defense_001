@@ -93,7 +93,9 @@ class Enemy {
     this.boss = !!def.boss;
     this.ethereal = !!def.ethereal;
     this.pathIdx = pathIdx;
-    this.path = this.flying ? game.airPaths[pathIdx] : game.paths[pathIdx];
+    // 지상 적에게 하늘 전용 포탈 번호가 오면 첫 경로로 대체
+    this.path = (this.flying ? game.airPaths[pathIdx] : game.paths[pathIdx]) || (this.flying ? game.airPaths[0] : game.paths[0]);
+    if (!this.flying && !game.paths[pathIdx]) this.pathIdx = 0;
     this.dist = Math.max(-TILE, startDist);
     this.hpMul = hpMul;
     this.maxHp = def.hp * hpMul;
@@ -297,8 +299,34 @@ class Enemy {
         } else this.cdA = 0.5;
       }
     }
+    if (d.eclipse) {
+      this.cdB = (this.cdB == null ? d.eclipse.cd * 0.6 : this.cdB) - dt;
+      if (this.cdB <= 0) {
+        this.cdB = d.eclipse.cd;
+        const r2 = (d.eclipse.radius * TILE) ** 2;
+        let n = 0;
+        for (const t of g.towers) {
+          if (t.type === 'shrine' || dist2(t.x, t.y, this.x, this.y) > r2) continue;
+          t.disabledT = Math.max(t.disabledT, d.eclipse.dur);
+          t.beamTarget = null;
+          n++;
+        }
+        g.fxRing(this.x, this.y, 10, d.eclipse.radius * TILE, 0.8, '#a0a8ff', 5);
+        g.fxPush({ type: 'flash', x: this.x, y: this.y, r: d.eclipse.radius * TILE, color: '#3a3a8a', life: 0.5, max: 0.5 });
+        if (n) g.emit('toast', { text: `일식! 타워 ${n}개가 잠들었습니다`, kind: 'warn' });
+        g.sfx('hex');
+      }
+    }
     if (d.ward && !this.warded && this.hp / this.maxHp <= d.ward.at) {
       this.warded = true;
+      if (d.ward.blink) {
+        g.fxRing(this.x, this.y, 8, 60, 0.6, '#a0a8ff', 4);
+        const bs = this.blockers.slice();
+        this.blockers.length = 0;
+        for (const k of bs) k.release();
+        this.dist = Math.min(this.path.length - TILE * 2, this.dist + d.ward.blink * TILE);
+        this.place();
+      }
       this.maxShield = this.maxHp * d.ward.pct;
       this.shield = this.maxShield;
       g.fxRing(this.x, this.y, 10, 90, 0.8, '#d48bff', 4);

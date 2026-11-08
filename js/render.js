@@ -720,6 +720,29 @@ function drawEnemyBody(ctx, type, s, t, e) {
       eyes(ctx, [s * 0.92, -s * 0.15], '#5a1a08', s * 0.06);
       break;
     }
+    case 'queen': {
+      Glow.draw(ctx, 0, -s * 0.4, s * 2.6, '#a0a8ff', 0.35);
+      ctx.save(); ctx.rotate(-t * 0.5);
+      ctx.fillStyle = '#e8ecff';
+      for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU; star(ctx, Math.cos(a) * s * 1.45, Math.sin(a) * s * 1.45 * 0.6, 2.4, 1, 5); ctx.fill(); }
+      ctx.restore();
+      const wave = Math.sin(t * 2) * s * 0.08;
+      ctx.fillStyle = linGrad(ctx, 0, -s, 0, s, ['#2a2c5a', '#121330']);
+      poly(ctx, [-s * 0.3, -s * 0.75, s * 0.3, -s * 0.75, s * 1.0 + wave, s * 0.95, -s * 1.0 + wave, s * 0.95]); ctx.fill();
+      ctx.fillStyle = 'rgba(230,236,255,0.8)';
+      for (let i = 0; i < 9; i++) { circle(ctx, Math.sin(i * 3.1) * s * 0.6, s * 0.1 + (i % 5) * s * 0.17, 1); ctx.fill(); }
+      ctx.fillStyle = '#d9dcf2'; ellipse(ctx, 0, -s * 0.95, s * 0.3, s * 0.36); ctx.fill();
+      ctx.fillStyle = '#121330';
+      ctx.beginPath(); ctx.arc(0, -s * 0.98, s * 0.4, Math.PI * 1.05, Math.PI * 1.95); ctx.fill();
+      ctx.fillStyle = '#e8ecff';
+      poly(ctx, [-s * 0.32, -s * 1.22, -s * 0.22, -s * 1.62, -s * 0.08, -s * 1.3, 0, -s * 1.78, s * 0.08, -s * 1.3, s * 0.22, -s * 1.62, s * 0.32, -s * 1.22]); ctx.fill();
+      Glow.draw(ctx, 0, -s * 1.7, s * 0.5, '#ffffff', 0.9);
+      eyes(ctx, [-s * 0.1, -s * 0.95, s * 0.12, -s * 0.95], '#ffffff', s * 0.06);
+      ctx.strokeStyle = '#a0a8ff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(s * 0.75, s * 0.9); ctx.lineTo(s * 0.85, -s * 1.3); ctx.stroke();
+      ctx.fillStyle = '#e8ecff'; star(ctx, s * 0.85, -s * 1.45, s * 0.22, s * 0.09, 4); ctx.fill();
+      break;
+    }
     case 'lord': {
       ctx.save(); ctx.rotate(t * 0.8);
       ctx.strokeStyle = 'rgba(200,120,255,0.45)'; ctx.lineWidth = 1.5;
@@ -1453,7 +1476,7 @@ const Renderer = {
 
   initAmbient(kind) {
     this.ambient = [];
-    const n = kind === 'snow' ? 90 : kind === 'ember' ? 45 : kind === 'wisp' ? 22 : kind === 'ash' ? 70 : 36;
+    const n = kind === 'snow' ? 90 : kind === 'ember' ? 45 : kind === 'wisp' ? 22 : kind === 'ash' ? 70 : kind === 'stars' ? 60 : 36;
     for (let i = 0; i < n; i++) this.ambient.push({ x: rand(0, WORLD_W), y: rand(0, WORLD_H), p: rand(0, TAU), s: rand(0.6, 1.4), kind });
   },
 
@@ -1469,6 +1492,9 @@ const Renderer = {
         a.x += Math.sin(a.p * 0.3 + a.s * 7) * 8 * dt;
         a.y += Math.cos(a.p * 0.25 + a.s * 2) * 6 * dt - 2 * dt;
         Glow.draw(ctx, a.x, a.y, 16 * a.s, a.s > 1 ? '#7dffb0' : '#7fd8ff', (0.3 + Math.sin(a.p * 0.9 + a.s * 5) * 0.2));
+      } else if (a.kind === 'stars') {
+        a.y += 3 * dt; a.x += Math.sin(a.p * 0.2 + a.s * 9) * 2 * dt;
+        Glow.draw(ctx, a.x, a.y, 7 * a.s, a.s > 1.1 ? '#c8d0ff' : '#ffffff', Math.max(0, Math.sin(a.p * 1.3 * a.s + a.s * 10)) * 0.7);
       } else if (a.kind === 'ash') {
         if (a.s > 1.15) {
           a.y -= 20 * a.s * dt; a.x += Math.sin(a.p * 2 + a.s) * 10 * dt;

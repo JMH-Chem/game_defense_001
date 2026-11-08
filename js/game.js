@@ -14,7 +14,7 @@ function defaultMods() {
   };
 }
 
-const ENDLESS_BOSSES = ['ogre', 'drake', 'lord'];
+const ENDLESS_BOSSES = ['ogre', 'drake', 'hydra', 'phoenix', 'lord', 'queen'];
 
 class Game {
   constructor(opts) {
@@ -43,6 +43,9 @@ class Game {
     const lt = st.paths[0][st.paths[0].length - 1];
     this.lantern = { x: lt[0] * TILE + TILE / 2, y: lt[1] * TILE + TILE / 2, c: lt[0], r: lt[1], hurt: 0 };
     this.airPaths = st.paths.map((p) => new Path([p[0], lt], false));
+    // 하늘 전용 포탈: 비행 적만 이곳에서 나옴
+    this.airPortals = (st.airPortals || []).map((p) => new Path([p, lt], false));
+    this.airPaths = this.airPaths.concat(this.airPortals);
     this.buildGrid();
     this.towers = [];
     this.enemies = [];
@@ -156,7 +159,7 @@ class Game {
   bossFor(n) {
     const st = this.stage;
     if (n <= st.waves) return st.bosses[n] || null;
-    if (n % 5 === 0) return ENDLESS_BOSSES[(n / 5) % 3];
+    if (n % 5 === 0) return ENDLESS_BOSSES[(n / 5) % ENDLESS_BOSSES.length];
     return null;
   }
 
@@ -193,7 +196,10 @@ class Game {
       const count = Math.max(2, Math.round((budget * shares[i]) / total / def.cost));
       const iv = def.interval * (0.85 + rng() * 0.3) * (count > 14 ? 0.8 : 1);
       for (let k = 0; k < count; k++) {
-        const path = np > 1 ? (count >= 8 ? (i + k) % np : i % np) : 0;
+        const nAir = this.airPaths.length;
+        let path = np > 1 ? (count >= 8 ? (i + k) % np : i % np) : 0;
+        // 하늘 전용 포탈이 있으면 비행 적은 모든 하늘길에 나눠 배정
+        if (def.flying && nAir > np) path = (i + k) % nAir;
         spawns.push({ t: t0 + k * iv, type, path });
       }
       t0 += count * iv * 0.6 + 1.5;
