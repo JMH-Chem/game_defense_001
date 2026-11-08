@@ -6,8 +6,10 @@
 - 타워 6종 × 3레벨 + 최종 진화 12종
 - 공명(시너지) 6종 + 조화 보너스
 - 룬 25종 (3웨이브마다 3장 중 1장)
-- 조작 가능한 영웅 3명, 주문 2종
-- 스테이지 3곳 (보통 / 영웅 난이도, 별 3개 평가) + 스테이지별 무한 모드
+- 조작 가능한 영웅 4명, 주문 2종
+- 원정지 5곳 (보통 / 영웅 난이도, 별 3개 평가) + 원정지별 무한 모드
+- 일반 적 13종 + 보스 5종 (재생·잠복·타워 마비·자폭·부활 같은 기믹)
+- 별 강화(영구 성장 6트랙), 업적 21종, 전투 이어하기
 - 그래픽·사운드 전부 코드로 생성 — 이미지·음원 파일 없음
 - 데스크톱 · 모바일(터치) 지원, 진행 상황 자동 저장
 
@@ -41,7 +43,7 @@ node tools/build.js
 | 영웅 이동 | 영웅 또는 초상화(`H`) 클릭 → 지도 클릭 | 같은 방식 |
 | 영웅 기술 | `E` | 기술 버튼 |
 | 주문 | `Q` 유성 낙하, `W` 증원군 → 지점 클릭 | 버튼 → 탭 → 다시 탭 |
-| 다음 웨이브 | `N` / `Enter` (일찍 부를수록 보너스 골드) | 상단 버튼 |
+| 다음 웨이브 | `N` / `Enter`, 또는 포탈 위 배지 클릭 (일찍 부를수록 보너스 골드) | 상단 버튼 · 포탈 배지 |
 | 배속 / 일시정지 | `F` (1×→2×→3×), `Space` / `Esc` | 상단 버튼 |
 | 취소 | 우클릭 / `Esc` | × 버튼 |
 
@@ -65,10 +67,22 @@ js/render.js      캔버스 렌더러 (절차적 그래픽)
 js/audio.js       WebAudio 합성 사운드
 js/ui.js          HUD·패널·모달·입력·튜토리얼·저장
 js/main.js        게임 루프
+tools/load.js     게임 로직 로더 (Node VM)
 tools/sim.js      헤드리스 밸런스 시뮬레이터
 tools/build.js    단일 HTML 빌드
+tests/            로직 테스트
 docs/DESIGN.md    게임 기획서
 ```
+
+## 테스트
+
+```bash
+npm test
+```
+
+데이터 무결성, 피해 공식, 경제, 룬 전체, 신규 기믹, 저장 복원, 모든 원정지 완주까지 14개 테스트를 시드 고정으로 돌립니다. PR과 `main` 푸시마다 GitHub Actions(`.github/workflows/ci.yml`)에서도 실행됩니다.
+
+`main` 을 GitHub Pages로 배포하려면 저장소 Settings → Pages 에서 Source를 **GitHub Actions** 로 바꾸고, Settings → Secrets and variables → Actions → Variables 에 `PAGES_ENABLED` = `true` 를 추가하세요.
 
 ## 밸런스 시뮬레이터
 
@@ -78,7 +92,7 @@ docs/DESIGN.md    게임 기획서
 node tools/sim.js
 ```
 
-인자 순서는 `[스테이지 0~2|all] [normal|hard|all] [aren|lyra|serin|all] [balanced|lazy|all] [-n 반복횟수] [-v]` 입니다. 예를 들어 3스테이지 보통 난이도를 영웅별로 5번씩 돌리려면:
+인자 순서는 `[스테이지 0~4|all] [normal|hard|all] [aren|lyra|serin|orin|all] [balanced|lazy|all] [-n 반복횟수] [-v]` 입니다. 예를 들어 3스테이지 보통 난이도를 영웅별로 5번씩 돌리려면:
 
 ```bash
 node tools/sim.js 2 normal all balanced -n 5
