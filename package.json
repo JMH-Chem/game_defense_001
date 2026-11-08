@@ -1,0 +1,17 @@
+{
+  "name": "lantern-keeper",
+  "version": "2.0.0",
+  "private": true,
+  "description": "등불 수호자 — 판타지 타워 디펜스 (브라우저, 의존성 없음)",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "check": "for f in js/*.js tools/*.js tests/*.js; do node --check \"$f\" || exit 1; done",
+    "test": "node --test",
+    "sim": "node tools/sim.js",
+    "build": "node tools/build.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
