@@ -80,6 +80,7 @@ const UI = {
     window.addEventListener('keydown', unlock, { capture: true });
 
     $('#btn-play').onclick = () => { this.click(); this.showStages(); };
+    $('#btn-continue').onclick = () => { this.click(); if (!App.resume()) this.toast('저장된 전투를 불러오지 못했습니다'); };
     $('#btn-codex').onclick = () => { this.click(); this.openCodex('tower'); };
     $('#btn-help').onclick = () => { this.click(); this.openHelp(); };
     $('#btn-settings').onclick = () => { this.click(); this.openSettings(); };
@@ -100,12 +101,19 @@ const UI = {
 
   click() { Sfx.play('click'); },
 
+  refreshContinue() {
+    const b = $('#btn-continue');
+    const run = RunSave.load();
+    b.hidden = !run || !STAGES[run.opts.stage];
+    if (!b.hidden) $('#continue-sub').textContent = `${STAGES[run.opts.stage].name} · 웨이브 ${run.wave} · ${HEROES[run.opts.hero].name}`;
+  },
+
   show(name) {
     this.screen = name;
     $('#scr-title').hidden = name !== 'title';
     $('#scr-stages').hidden = name !== 'stages';
     $('#scr-game').hidden = name !== 'game';
-    if (name === 'title') TitleBG.start($('#title-bg')); else TitleBG.stop();
+    if (name === 'title') { TitleBG.start($('#title-bg')); this.refreshContinue(); } else TitleBG.stop();
     if (name === 'game') requestAnimationFrame(() => this.layout());
   },
 
@@ -206,6 +214,7 @@ const UI = {
     Save.data.diff = this.pick.diff;
     Save.data.stage = this.pick.stage;
     Save.save();
+    RunSave.clear();
     App.start({ stage: this.pick.stage, hero: this.pick.hero, difficulty: this.pick.diff, endless: this.pick.endless, meta: { ...Save.data.upgrades } });
   },
 
@@ -273,7 +282,7 @@ const UI = {
   },
 
   attachGame(g) {
-    this.infoKey = ''; this.resKey = ''; this.previewKey = '';
+    this.infoKey = ''; this.resKey = ''; this.previewKey = ''; this.savedWave = g.wave;
     this.hud = { gold: -1, lives: -1, wave: '' };
     $('#hero-name').textContent = g.hero.def.name;
     $('#hero-card').style.setProperty('--hc', g.hero.def.color);
@@ -290,7 +299,7 @@ const UI = {
     g.on('boss', (e) => this.banner(e.def.name, '보스가 나타났습니다', true));
     g.on('newEnemy', (type) => this.introEnemy(type));
     g.on('runes', (picks) => this.openRunes(picks));
-    g.on('end', (r) => setTimeout(() => this.openResult(r), 1300));
+    g.on('end', (r) => { RunSave.clear(); setTimeout(() => this.openResult(r), 1300); });
     g.on('recalc', () => { this.resKey = ''; this.infoKey = ''; });
     this.startCoach(g);
   },
@@ -676,6 +685,10 @@ const UI = {
     this.updateInfo(g);
     if (App.view.moveMarker) { App.view.moveMarker.t -= dt * 1.8; if (App.view.moveMarker.t <= 0) App.view.moveMarker = null; }
     this.coachTick(g);
+    if (g.state === 'running' && !g.spawning && g.countdown != null && !g.paused && g.enemies.length === 0 && this.savedWave !== g.wave) {
+      this.savedWave = g.wave;
+      RunSave.save(g);
+    }
     this.achT = (this.achT || 0) + dt;
     if (this.achT > 1) { this.achT = 0; this.checkAchievements(g); }
   },

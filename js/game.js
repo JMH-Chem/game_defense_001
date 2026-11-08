@@ -677,6 +677,62 @@ class Game {
     return true;
   }
 
+  // ── 저장 & 이어하기: 웨이브 사이(필드가 빈 상태)의 스냅샷 ──
+  serialize() {
+    const h = this.hero;
+    return {
+      v: 1,
+      opts: { stage: this.stageIdx, hero: this.heroId, difficulty: this.diffId, endless: this.endless, meta: this.meta },
+      wave: this.wave, gold: this.gold, lives: this.lives, maxLives: this.maxLives, time: this.time,
+      stats: Object.assign({}, this.stats), runes: this.runes.map((r) => r.id), seen: Array.from(this.seen),
+      spells: Object.assign({}, this.spells),
+      hero: { level: h.level, xp: h.xp, hx: h.hx, hy: h.hy, skillT: Math.max(0, h.skillT) },
+      towers: this.towers.map((t) => ({
+        type: t.type, c: t.c, r: t.r, level: t.level, branch: t.branch, mode: t.mode,
+        invested: t.invested, kills: t.kills, dmgDealt: Math.round(t.dmgDealt), rally: t.rally,
+      })),
+    };
+  }
+
+  static restore(data, extra = {}) {
+    const g = new Game(Object.assign({}, data.opts, extra));
+    for (const id of data.runes) {
+      const r = RUNES.find((x) => x.id === id);
+      if (r) { r.apply(g); g.runes.push(r); }
+    }
+    for (const s of data.towers) {
+      if (!TOWERS[s.type] || !g.canBuild(s.c, s.r)) continue;
+      const t = new Tower(g, s.type, s.c, s.r);
+      Object.assign(t, { level: s.level, branch: s.branch, mode: s.mode, invested: s.invested, kills: s.kills || 0, dmgDealt: s.dmgDealt || 0, buildT: 0 });
+      if (t.type === 'barracks') {
+        const np = g.nearestPathPoint(t.x, t.y);
+        t.rally = s.rally || (np ? { x: np.x, y: np.y } : { x: t.x, y: t.y + TILE });
+      }
+      g.towers.push(t);
+      g.occ[s.r][s.c] = t;
+    }
+    g.gold = data.gold;
+    g.lives = data.lives;
+    g.maxLives = data.maxLives;
+    g.time = data.time;
+    Object.assign(g.stats, data.stats);
+    g.seen = new Set(data.seen);
+    Object.assign(g.spells, data.spells);
+    g.wave = data.wave;
+    const h = g.hero;
+    h.level = data.hero.level;
+    h.xp = data.hero.xp;
+    h.recalc();
+    h.hp = h.maxHp;
+    h.hx = h.x = data.hero.hx;
+    h.hy = h.y = data.hero.hy;
+    h.skillT = data.hero.skillT || 0;
+    g.recalcAll();
+    if (g.wave > 0) { g.state = 'running'; g.countdown = WAVE_GAP; }
+    g.waveInfo = g.wave < g.totalWaves ? g.buildWave(g.wave + 1) : null;
+    return g;
+  }
+
   // ── 결과 ──
   win() {
     this.state = 'won';

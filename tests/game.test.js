@@ -146,3 +146,30 @@ test('모든 스테이지를 처음부터 끝까지 오류 없이 플레이할 �
     assert.ok(r.wave >= 5, `${st.name}: 웨이브 ${r.wave}에서 너무 일찍 끝남`);
   });
 });
+
+test('저장·이어하기: 스냅샷을 복원하면 타워·골드·웨이브·룬·영웅이 그대로다', () => {
+  const g = newGame(2, { meta: { supply: 1, archer: 2 } });
+  g.gold = 5000;
+  const a = g.build('archer', 3, 3).tower;
+  g.upgrade(a); g.upgrade(a); g.upgrade(a, 0);
+  const b = g.build('barracks', 7, 7).tower;
+  b.setRally(b.rally.x + 4, b.rally.y);
+  g.runeChoices = [RUNES.find((r) => r.id === 'frenzy')];
+  g.chooseRune(0);
+  g.wave = 6;
+  g.hero.gainXp(500);
+  const data = JSON.parse(JSON.stringify(g.serialize()));
+  const r = Game.restore(data);
+  assert.equal(r.gold, g.gold);
+  assert.equal(r.wave, 6);
+  assert.equal(r.towers.length, 2);
+  assert.equal(r.towers[0].branch, 0);
+  assert.equal(r.towers[0].e.dmg, a.e.dmg, '룬·강화가 다시 적용되어 같은 피해');
+  // VM 샌드박스 객체와 프로토타입이 달라 필드 단위로 비교
+  assert.equal(r.towers[1].rally.x, b.rally.x);
+  assert.equal(r.towers[1].rally.y, b.rally.y);
+  assert.equal(r.hero.level, g.hero.level);
+  assert.equal(r.state, 'running');
+  assert.equal(r.countdown != null, true);
+  assert.equal(r.waveInfo.n, 7);
+});

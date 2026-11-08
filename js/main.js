@@ -4,6 +4,14 @@
 // ─────────────────────────────────────────────────────────────
 const STEP = 1 / 60;
 
+// 진행 중인 전투 저장 (웨이브 사이, 필드가 비었을 때)
+const RunSave = {
+  key: 'lantern-keeper.run.v1',
+  load() { try { const raw = localStorage.getItem(this.key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } },
+  save(g) { try { localStorage.setItem(this.key, JSON.stringify(g.serialize())); } catch (e) { /* 저장 불가: 무시 */ } },
+  clear() { try { localStorage.removeItem(this.key); } catch (e) { /* 무시 */ } },
+};
+
 const App = {
   game: null,
   opts: null,
@@ -33,9 +41,23 @@ const App = {
     if (typeof Sfx !== 'undefined') Sfx.musicMood = 'calm';
   },
 
-  restart() { if (this.opts) this.start(this.opts); },
+  restart() { RunSave.clear(); if (this.opts) this.start(this.opts); },
+
+  resume() {
+    const data = RunSave.load();
+    if (!data) return false;
+    let g;
+    try { g = Game.restore(data, { settings: Save.data.settings }); } catch (e) { RunSave.clear(); return false; }
+    this.start(data.opts);
+    this.game = g;
+    UI.attachGame(g);
+    UI.layout();
+    UI.toast(`이어하기 — 웨이브 ${g.wave} 이후부터`, 'gold');
+    return true;
+  },
 
   quit() {
+    RunSave.clear();
     this.game = null;
     UI.closeModal();
     UI.showStages();
