@@ -11,8 +11,8 @@ const Save = {
   key: 'lantern-keeper.v1',
   data: {
     unlocked: 1, stars: {}, hardStars: {}, endlessBest: {},
-    settings: { sfx: true, music: true, dmgNumbers: true, shake: true },
-    tutorialDone: false, hero: 'aren', diff: 'normal', stage: 0, seen: {}, resCollapsed: false,
+    settings: { sfx: true, music: true, dmgNumbers: true, shake: true, lighting: true },
+    tutorialDone: false, hero: 'aren', diff: 'normal', stage: 0, seen: {}, resCollapsed: true,
   },
   load() {
     try {
@@ -20,7 +20,7 @@ const Save = {
       if (raw) {
         const d = JSON.parse(raw);
         Object.assign(this.data, d);
-        this.data.settings = Object.assign({ sfx: true, music: true, dmgNumbers: true, shake: true }, d.settings || {});
+        this.data.settings = Object.assign({ sfx: true, music: true, dmgNumbers: true, shake: true, lighting: true }, d.settings || {});
       }
     } catch (e) { /* 저장소 사용 불가: 기본값으로 진행 */ }
   },
@@ -413,6 +413,7 @@ const UI = {
   hitTest(x, y) {
     const g = App.game;
     if (!g) return null;
+    for (const b of Renderer.badges || []) if (dist(x, y, b.x, b.y) <= b.r) return { kind: 'portal' };
     const h = g.hero;
     if (h.alive && dist(x, y, h.x, h.y - 12) < 18) return { kind: 'hero', ref: h };
     const c = Math.floor(x / TILE), r = Math.floor(y / TILE);
@@ -476,6 +477,7 @@ const UI = {
       return;
     }
     const hit = this.hitTest(x, y);
+    if (hit && hit.kind === 'portal') { this.callWave(); return; }
     if (v.selected && v.selected.kind === 'hero') {
       if (hit && hit.kind === 'hero') { this.select(null); return; }
       if (!hit || hit.kind !== 'tower') {
@@ -684,7 +686,9 @@ const UI = {
     const types = TOWER_ORDER.filter((t) => counts[t]);
     if (!types.length) { el.innerHTML = ''; return; }
     const R = g.res;
-    let html = `<h5><span>공명</span><span>${Save.data.resCollapsed ? '▸' : '▾'}</span></h5>`;
+    const active = types.filter((t) => R.tier[t]);
+    const summary = active.map((t) => `<span style="color:${TOWERS[t].color}">◆${R.tier[t]}</span>`).join(' ') + (R.harmonyOn ? ' <span style="color:#fff">✦</span>' : '');
+    let html = `<h5><span>공명 ${Save.data.resCollapsed ? `<span class="res-sum">${summary || '<span style="color:var(--dim)">없음</span>'}</span>` : ''}</span><span>${Save.data.resCollapsed ? '▸' : '▾'}</span></h5>`;
     for (const t of types) {
       const def = RESONANCE[t];
       const n = counts[t];
@@ -717,7 +721,7 @@ const UI = {
     else if (v.mode === 'skill') key = 'skill';
     else if (v.selected) {
       const s = v.selected;
-      if (s.kind === 'tower') key = `tower:${s.ref.c},${s.ref.r}:${s.ref.level}:${s.ref.branch}:${s.ref.mode}:${v.mode}`;
+      if (s.kind === 'tower') key = `tower:${s.ref.c},${s.ref.r}:${s.ref.level}:${s.ref.branch}:${s.ref.mode}:${v.mode}:${g.wave}`;
       else if (s.kind === 'hero') key = `hero:${s.ref.level}:${s.ref.alive}`;
       else key = `enemy:${s.ref.id}`;
     }
@@ -835,7 +839,8 @@ const UI = {
       ${target}
       ${up}
       ${App.view.mode === 'rally' ? '<p class="ip-hint">사거리 안의 길 위를 눌러 병사들의 집결지를 지정하세요.</p>' : ''}
-      <div class="ip-actions">${rally}<button class="btn btn-danger" id="ip-sell">판매 +${g.sellValue(t)}</button></div>`;
+      <div class="ip-actions">${rally}<button class="btn btn-danger" id="ip-sell">${t.refund ? '전액 환불' : '판매'} +${g.sellValue(t)}</button></div>
+      ${t.refund ? '<p class="ip-hint">다음 웨이브가 시작되기 전까지는 전액 환불됩니다.</p>' : ''}`;
     Icons.tower($('.ip-head canvas', el), t.type, t.level, t.branch, 48);
     $$('canvas[data-branch]', el).forEach((c) => Icons.tower(c, t.type, 2, Number(c.dataset.branch), 40));
     $('.ip-close', el).onclick = () => this.select(null);
@@ -851,7 +856,7 @@ const UI = {
       } else {
         sb.dataset.confirm = '1';
         sb.textContent = `한 번 더 눌러 판매 (+${g.sellValue(t)})`;
-        setTimeout(() => { if (sb.isConnected) { delete sb.dataset.confirm; sb.textContent = `판매 +${g.sellValue(t)}`; } }, 2500);
+        setTimeout(() => { if (sb.isConnected) { delete sb.dataset.confirm; sb.textContent = `${t.refund ? '전액 환불' : '판매'} +${g.sellValue(t)}`; } }, 2500);
       }
     };
     this.updateInfoSubOnly(t);
@@ -1157,6 +1162,7 @@ const UI = {
         ${row('music', '배경음', '잔잔한 합성 음악')}
         ${row('dmgNumbers', '치명타 숫자', '치명타 피해량 표시')}
         ${row('shake', '화면 흔들림', '폭발·보스 등장 시')}
+        ${row('lighting', '밤 조명 효과', '끄면 화면이 밝아지고 저사양 기기에서 더 부드럽습니다')}
       </div>
       <div class="confirm-row" id="reset-row"><button class="btn btn-danger" id="btn-reset" style="min-height:34px">진행 상황 초기화</button></div>
       <div class="modal-actions"><button class="btn btn-primary" data-a="close">닫기</button></div>`, { esc: () => (back ? back() : this.closeModal()), pause: !!App.game });

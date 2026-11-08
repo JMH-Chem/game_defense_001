@@ -1336,6 +1336,7 @@ const Renderer = {
 
     // 포탈
     g.paths.forEach((p) => this.drawPortal(ctx, p, g.theme.portal, t));
+    (g.airPortals || []).forEach((p) => this.drawPortal(ctx, p, g.theme.portal, t));
 
     // 선택 범위 표시
     const sel = view.selected;
@@ -1458,6 +1459,10 @@ const Renderer = {
     // 효과
     this.drawFx(ctx, g, t);
 
+    // 밤 조명: 어둠을 깔고 빛나는 것들 주변만 밝힘
+    if (view.lighting !== false) this.drawLighting(ctx, g, t);
+    this.drawBadges(ctx, g, t);
+
     // 환경 입자
     ctx.globalCompositeOperation = 'lighter';
     this.drawAmbient(ctx, dt);
@@ -1481,6 +1486,97 @@ const Renderer = {
       ctx.fillStyle = radGrad(ctx, WORLD_W / 2, WORLD_H / 2, WORLD_H * 0.45, WORLD_W * 0.7,
         ['rgba(255,40,60,0)', `rgba(255,40,60,${g.lantern.hurt * 0.45})`]);
       ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+  },
+
+  drawLighting(ctx, g, t) {
+    const dark = g.theme.dark || 0.4;
+    const s = 0.5;
+    const w = Math.round(WORLD_W * s), h = Math.round(WORLD_H * s);
+    let c = this.lightCanvas;
+    if (!c) c = this.lightCanvas = document.createElement('canvas');
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const l = c.getContext('2d');
+    l.setTransform(1, 0, 0, 1, 0, 0);
+    l.globalCompositeOperation = 'source-over';
+    l.clearRect(0, 0, w, h);
+    l.fillStyle = `rgba(3,4,14,${dark})`;
+    l.fillRect(0, 0, w, h);
+    l.globalCompositeOperation = 'destination-out';
+    l.setTransform(s, 0, 0, s, 0, 0);
+    const hole = (x, y, r, a) => Glow.draw(l, x, y, r, '#ffffff', a);
+    const L = g.lantern;
+    const flick = 1 + Math.sin(t * 9) * 0.03 + Math.sin(t * 13.7) * 0.02;
+    hole(L.x + 9, L.y - 20, 230 * flick, 1);
+    hole(L.x + 9, L.y - 20, 110 * flick, 1);
+    for (const tw of g.towers) hole(tw.x, tw.y - 16, tw.branch != null ? 105 : 70 + tw.level * 10, tw.disabledT > 0 ? 0.35 : 0.95);
+    if (g.hero.alive) hole(g.hero.x, g.hero.y - 10, 80, 0.85);
+    for (const u of g.units) hole(u.x, u.y - 6, 34, 0.5);
+    for (const p of g.projectiles) hole(p.x, p.y, 28, 0.8);
+    for (const e of g.enemies) {
+      if (e.burnT > 0) hole(e.x, e.y, 34, 0.7);
+      else if (e.boss) hole(e.x, e.y - (e.flying ? 26 : 0), 60, 0.45);
+      else hole(e.x, e.y, 22, 0.3);
+    }
+    for (const gr of g.grounds) hole(gr.x, gr.y, gr.r * 2, 0.95);
+    for (const f of g.fx) {
+      const a = clamp(f.life / f.max, 0, 1);
+      if (f.type === 'flash') hole(f.x, f.y, f.r * 2.2, a);
+      else if (f.type === 'flame') hole(f.x, f.y, 26, a * 0.5);
+      else if (f.type === 'bolt') for (const p of f.pts) hole(p.x, p.y, 50, a);
+      else if (f.type === 'meteor') hole(f.x, f.y, 70 * (1 - a) + 20, 0.8);
+      else if (f.type === 'rift') hole(f.x, f.y, f.r * 1.3, Math.min(1, a * 3) * 0.7);
+    }
+    for (const d of g.decos) {
+      if (d.kind === 'brazier') hole(d.c * TILE + TILE / 2, d.r * TILE + TILE / 2, 95, 0.9);
+      else if (d.kind === 'crystal' || d.kind === 'mushroom' || d.kind === 'lava' || d.kind === 'pool') hole(d.c * TILE + TILE / 2, d.r * TILE + TILE / 2, 55, 0.55);
+    }
+    for (const p of g.paths.concat(g.airPortals || [])) { const pt = p.at(TILE * 0.4); hole(pt.x, pt.y, 70, 0.6); }
+    l.globalCompositeOperation = 'source-over';
+    ctx.drawImage(c, 0, 0, WORLD_W, WORLD_H);
+  },
+
+  // 웨이브 사이: 다음 웨이브가 나올 포탈 위에 호출 배지 (누르면 조기 호출)
+  drawBadges(ctx, g, t) {
+    this.badges = [];
+    const info = g.waveInfo;
+    if (!info || g.spawning || g.state === 'won' || g.state === 'lost') return;
+    if (g.state !== 'prep' && g.countdown == null) return;
+    const counts = {};
+    for (const s of info.spawns) {
+      const fly = ENEMIES[s.type].flying;
+      const key = fly ? `a${s.path}` : `g${s.path}`;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    const spots = [];
+    for (const key of Object.keys(counts)) {
+      const air = key[0] === 'a';
+      const idx = Number(key.slice(1));
+      const p = air ? g.airPaths[idx] : g.paths[idx];
+      if (!p) continue;
+      const pt = p.at(TILE * 1.7);
+      const near = spots.find((sp) => dist(sp.x, sp.y, pt.x, pt.y) < 30);
+      if (near) { near.n += counts[key]; near.air = near.air || air; continue; }
+      spots.push({ x: clamp(pt.x, 22, WORLD_W - 22), y: clamp(pt.y, 22, WORLD_H - 22), n: counts[key], air, boss: false });
+    }
+    const frac = g.countdown != null ? clamp(g.countdown / WAVE_GAP, 0, 1) : 1;
+    const pulse = 1 + Math.sin(t * 5) * 0.06;
+    for (const sp of spots) {
+      const r = 16 * pulse;
+      ctx.globalCompositeOperation = 'lighter';
+      Glow.draw(ctx, sp.x, sp.y, 34, info.boss ? '#ff5d73' : '#ffc46b', 0.45);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(12,10,24,0.92)';
+      circle(ctx, sp.x, sp.y, r); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 3;
+      circle(ctx, sp.x, sp.y, r - 1); ctx.stroke();
+      ctx.strokeStyle = info.boss ? '#ff5d73' : '#ffc46b'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, r - 1, -Math.PI / 2, -Math.PI / 2 + TAU * frac); ctx.stroke();
+      ctx.fillStyle = '#fff3dc';
+      ctx.font = `800 11px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (sp.air) { ctx.fillStyle = '#d6b8ff'; poly(ctx, [sp.x - 7, sp.y - 5, sp.x - 2, sp.y - 8, sp.x - 4, sp.y - 3]); ctx.fill(); ctx.fillStyle = '#fff3dc'; }
+      ctx.fillText(String(sp.n), sp.x + (sp.air ? 2 : 0), sp.y + 1);
+      this.badges.push({ x: sp.x, y: sp.y, r: r + 4 });
     }
   },
 

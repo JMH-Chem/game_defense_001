@@ -257,6 +257,8 @@ kbd {
 .res-panel:empty { display: none; }
 .res-panel h5 { margin: 0 0 2px; font-size: 10px; letter-spacing: 0.24em; color: var(--muted); font-weight: 500; display: flex; justify-content: space-between; gap: 10px; cursor: pointer; }
 .res-panel.collapsed .res-row { display: none; }
+.res-panel.collapsed h5 { margin: 0; }
+.res-sum { letter-spacing: 0.05em; margin-left: 6px; font-size: 11px; }
 .res-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 6px; align-items: center; color: var(--dim); white-space: nowrap; }
 .res-row i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); opacity: 0.4; transform: rotate(45deg); }
 .res-row.active { color: var(--text); }

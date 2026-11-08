@@ -53,6 +53,7 @@ const App = {
         if (n >= 12) this.acc = 0;
       }
       this.view.shake = Save.data.settings.shake;
+      this.view.lighting = Save.data.settings.lighting;
       g.settings = Save.data.settings;
       Renderer.draw(g, this.view, this.modalPause ? 0 : dt);
       UI.frame(dt);

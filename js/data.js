@@ -275,11 +275,11 @@ const RUNES = [
 // paths: 타일 좌표 웨이포인트(축 정렬). 첫 점은 화면 밖 출현 지점, 마지막 점이 등불.
 const THEMES = {
   forest: { ground: '#15231d', ground2: '#1a2b24', speck: '#2d4c3b', grass: '#2f5a42', path: '#4a3c2d', pathEdge: '#241c15', pathSpeck: '#6b5a45',
-    decos: ['tree', 'tree', 'tree', 'bush', 'rock', 'mushroom'], ambient: 'firefly', portal: '#9d6bff', tint: 'rgba(30,70,60,0.10)' },
+    decos: ['tree', 'tree', 'tree', 'bush', 'rock', 'mushroom'], ambient: 'firefly', dark: 0.42, portal: '#9d6bff', tint: 'rgba(30,70,60,0.10)' },
   frost: { ground: '#18202e', ground2: '#1d2738', speck: '#3a4c66', grass: '#c9dcf5', path: '#56647a', pathEdge: '#252e3d', pathSpeck: '#8b9bb3',
-    decos: ['pine', 'pine', 'pine', 'icerock', 'crystal'], ambient: 'snow', portal: '#6fd3ff', tint: 'rgba(60,90,140,0.10)' },
+    decos: ['pine', 'pine', 'pine', 'icerock', 'crystal'], ambient: 'snow', dark: 0.3, portal: '#6fd3ff', tint: 'rgba(60,90,140,0.10)' },
   ruins: { ground: '#1c1724', ground2: '#221c2c', speck: '#3a2e47', grass: '#4a3a5a', path: '#4a3c47', pathEdge: '#221a24', pathSpeck: '#6f5d6c',
-    decos: ['pillar', 'rubble', 'deadtree', 'pillar', 'brazier'], ambient: 'ember', portal: '#ff5d8f', tint: 'rgba(90,40,80,0.10)' },
+    decos: ['pillar', 'rubble', 'deadtree', 'pillar', 'brazier'], ambient: 'ember', dark: 0.48, portal: '#ff5d8f', tint: 'rgba(90,40,80,0.10)' },
 };
 
 const STAGES = [

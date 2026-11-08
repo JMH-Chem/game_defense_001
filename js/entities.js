@@ -680,6 +680,8 @@ class Tower {
     this.level = 0;
     this.branch = null;
     this.invested = 0;
+    this.refund = 0; // 다음 웨이브 시작 전까지 전액 환불되는 금액
+    this.disabledT = 0;
     this.cdT = 0.3;
     this.angle = 0.6;
     this.mode = 'first';

@@ -193,6 +193,7 @@ class Game {
   startWave() {
     if (this.wave >= this.totalWaves) return;
     const n = ++this.wave;
+    for (const t of this.towers) t.refund = 0;
     const info = this.waveInfo && this.waveInfo.n === n ? this.waveInfo : this.buildWave(n);
     for (const s of info.spawns) {
       this.spawnQueue.push({ at: this.time + s.t, type: s.type, path: s.path, boss: !!s.boss, hpMul: s.boss ? this.bossHpMul(n) : info.hpMul });
@@ -264,7 +265,7 @@ class Game {
   }
   costOf(base) { return Math.max(1, Math.round(base * (1 - this.mods.costMul))); }
   buildCost(type) { return this.costOf(TOWERS[type].levels[0].cost); }
-  sellValue(t) { return Math.floor(t.invested * this.mods.sellRate); }
+  sellValue(t) { return t.refund + Math.floor((t.invested - t.refund) * this.mods.sellRate); }
 
   canBuild(c, r) {
     return c >= 0 && r >= 0 && c < COLS && r < ROWS && this.grid[r][c] === 0 && !this.occ[r][c];
@@ -279,6 +280,7 @@ class Game {
     this.stats.spent += cost;
     const t = new Tower(this, type, c, r);
     t.invested = cost;
+    t.refund = cost;
     const dm = towerStats(type, 0, null).defaultMode;
     if (dm) t.mode = dm;
     if (type === 'barracks') {
@@ -309,6 +311,7 @@ class Game {
     this.gold -= opt.cost;
     this.stats.spent += opt.cost;
     t.invested += opt.cost;
+    t.refund += opt.cost;
     if (opt.kind === 'level') t.level++;
     else {
       t.level = 3;
